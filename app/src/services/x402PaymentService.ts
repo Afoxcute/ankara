@@ -33,9 +33,10 @@ export const USDT_TESTNET = '0x000007C000000000000000000000000001200000'; // Ass
 export const USDC_MAINNET = '0x0000053900000000000000000000000001200000';
 export const USDT_MAINNET = '0x000007C000000000000000000000000001200000';
 
-// PAS (Paseo) ERC20 precompile address for x402 payments.
-// If PAS is not exposed via the ERC20 precompile in your environment, this will fail;
-// override via `VITE_PAS_X402_ASSET_ADDRESS`.
+// PAS (Paseo) ERC20-precompile address for x402 payments.
+// For Polkadot Hub reviving, the native token PAS is exposed as an ERC20 precompile
+// with asset id = 0, encoded into the first 4 bytes of the precompile address.
+// If your x402 facilitator expects a different address/domain, override via env vars.
 export const PAS_TESTNET =
   (typeof import.meta !== 'undefined' &&
     import.meta.env?.VITE_PAS_X402_ASSET_ADDRESS &&
