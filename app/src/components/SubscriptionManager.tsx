@@ -198,12 +198,33 @@ export default function SubscriptionManager({
     frequency: 'monthly' | 'weekly' | 'yearly';
     recipientAddress: string;
     autoPay: boolean;
+    paymentToken: 'PAS' | 'USDC' | 'USDt';
+    isPrivate?: boolean;
   }) => {
     if (!editingSubscription) return;
 
     try {
       setLoading(true);
-      const success = await subscriptionAgent.updateSubscription(editingSubscription.id, serviceData);
+      // For now, payment token changes are only supported for off-chain (x402) subscriptions.
+      const updates: any = {
+        service: serviceData.service,
+        cost: serviceData.cost,
+        frequency: serviceData.frequency,
+        recipientAddress: serviceData.recipientAddress,
+        autoPay: serviceData.autoPay,
+      };
+
+      if (!editingSubscription.onChainSubscriptionId) {
+        if (serviceData.paymentToken === 'PAS') {
+          onError?.('Switching payment asset from stablecoin to PAS requires creating a new subscription.');
+          return;
+        }
+        updates.usageData = {
+          stablecoin: serviceData.paymentToken,
+        };
+      }
+
+      const success = await subscriptionAgent.updateSubscription(editingSubscription.id, updates);
       
       if (success) {
         onSuccess?.(`Service "${serviceData.service}" updated successfully!`);
@@ -229,7 +250,10 @@ export default function SubscriptionManager({
 
     try {
       setLoading(true);
-      onSuccess?.(`Processing payment of ${subscription.cost.toFixed(4)} FLOW to ${subscription.service}...`);
+      const assetLabel = subscription.paymentToken === 'PAS' ? 'PAS' : subscription.paymentToken;
+      onSuccess?.(
+        `Processing payment of ${subscription.cost.toFixed(4)} ${assetLabel} to ${subscription.service}...`
+      );
 
       if (subscription.onChainSubscriptionId) {
         const { txHash } = await payWithApproval(
@@ -237,13 +261,17 @@ export default function SubscriptionManager({
           subscription.cost,
           subscription.id
         );
-        onSuccess?.(`✅ Paid ${subscription.cost.toFixed(4)} FLOW. Tx: ${txHash.slice(0, 10)}...`);
+        onSuccess?.(
+          `✅ Paid ${subscription.cost.toFixed(4)} ${assetLabel}. Tx: ${txHash.slice(0, 10)}...`
+        );
       } else {
         const result = await subscriptionAgent.autoPaySubscription(account, subscription);
         if (result.success) {
-          onSuccess?.(`✅ Successfully paid ${subscription.cost.toFixed(4)} FLOW. Transaction: ${result.transactionHash?.slice(0, 10)}...`);
+          onSuccess?.(
+            `✅ Successfully paid ${subscription.cost.toFixed(4)} ${assetLabel}. Transaction: ${result.transactionHash?.slice(0, 10)}...`
+          );
         } else {
-          onError?.(result.error || 'Payment failed. Please check your FLOW balance.');
+          onError?.(result.error || `Payment failed. Please check your ${assetLabel} balance.`);
         }
       }
       await loadSubscriptions();
@@ -265,26 +293,32 @@ export default function SubscriptionManager({
         message.includes('not found on ABI');
       onError?.(
         isAbiDecodeError
-          ? 'Payment failed. Ensure you have enough FLOW, the subscription is due, and you are the subscriber.'
-          : `Payment failed: ${message}. Ensure sufficient FLOW balance.`
+          ? `Payment failed. Ensure you have enough ${subscription.paymentToken}, the subscription is due, and you are the subscriber.`
+          : `Payment failed: ${message}. Ensure sufficient ${subscription.paymentToken} balance.`
       );
     } finally {
       setLoading(false);
     }
   };
 
-  const totalMonthlyCost = subscriptions
+  const monthlyCostsByToken = subscriptions
     .filter(sub => sub.isActive)
-    .reduce((total, sub) => {
-      if (sub.frequency === 'monthly') {
-        return total + sub.cost;
-      } else if (sub.frequency === 'weekly') {
-        return total + (sub.cost * 4);
-      } else if (sub.frequency === 'yearly') {
-        return total + (sub.cost / 12);
-      }
-      return total;
-    }, 0);
+    .reduce(
+      (acc, sub) => {
+        const monthlyEquivalent =
+          sub.frequency === 'monthly'
+            ? sub.cost
+            : sub.frequency === 'weekly'
+              ? sub.cost * 4
+              : sub.frequency === 'yearly'
+                ? sub.cost / 12
+                : sub.cost;
+
+        acc[sub.paymentToken] += monthlyEquivalent;
+        return acc;
+      },
+      { PAS: 0, USDC: 0, USDt: 0 } as Record<Subscription['paymentToken'], number>
+    );
 
   const activeSubscriptions = subscriptions.filter(sub => sub.isActive);
   const dueSubscriptions = activeSubscriptions.filter(sub => {
@@ -302,7 +336,9 @@ export default function SubscriptionManager({
         </div>
         <div className="stat-card">
           <div className="stat-label">Monthly Cost</div>
-          <div className="stat-value">{totalMonthlyCost.toFixed(4)} FLOW</div>
+          <div className="stat-value">
+            {monthlyCostsByToken.PAS.toFixed(4)} PAS · {monthlyCostsByToken.USDC.toFixed(4)} USDC · {monthlyCostsByToken.USDt.toFixed(4)} USDt
+          </div>
         </div>
         <div className="stat-card">
           <div className="stat-label">Due Now</div>
@@ -374,7 +410,7 @@ export default function SubscriptionManager({
                 <div key={svc.id} className="card service-card">
                   <div className="service-card-name">{svc.name}</div>
                   <div className="service-card-detail">
-                    {typeof svc.cost === 'number' ? svc.cost : Number(svc.cost)} FLOW / {svc.frequency}
+                    {typeof svc.cost === 'number' ? svc.cost : Number(svc.cost)} / {svc.frequency}
                   </div>
                   <div className="service-card-recipient" title={svc.recipientAddress}>
                     To: {svc.recipientAddress.slice(0, 6)}…{svc.recipientAddress.slice(-4)}
@@ -407,6 +443,7 @@ export default function SubscriptionManager({
             frequency: subscribeToService.frequency as 'monthly' | 'weekly' | 'yearly',
             recipientAddress: subscribeToService.recipientAddress,
             autoPay: true,
+            paymentToken: 'PAS',
             serviceId: subscribeToService.id,
           } : undefined}
           onSubmit={async (serviceData) => {
@@ -417,30 +454,56 @@ export default function SubscriptionManager({
             try {
               setLoading(true);
               setSubscribeToService(null);
-              onSuccess?.('Creating subscription on-chain...');
-              const isPrivate = !!serviceData.isPrivate && !!CONFIDENTIAL_SUBSCRIPTION_CONTRACT_ADDRESS;
-              const { subscriptionId: onChainId, txHash } = isPrivate
-                ? await confidentialSubscribe(
-                    serviceData.recipientAddress,
-                    serviceData.cost,
-                    serviceData.frequency
-                  )
-                : await contractSubscribe(
-                    serviceData.recipientAddress,
-                    serviceData.cost,
-                    serviceData.frequency
-                  );
-              await subscriptionApi.createSubscription({
-                ...(serviceData.serviceId ? { serviceId: serviceData.serviceId } : { serviceName: serviceData.service }),
-                cost: serviceData.cost,
-                frequency: serviceData.frequency,
-                recipientAddress: serviceData.recipientAddress,
-                userAddress: account.address,
-                autoPay: serviceData.autoPay,
-                onChainSubscriptionId: onChainId,
-                onChainContractAddress: isPrivate ? CONFIDENTIAL_SUBSCRIPTION_CONTRACT_ADDRESS : (SUBSCRIPTION_CONTRACT_ADDRESS || undefined),
-              });
-              onSuccess?.(`Subscription created on-chain. Tx: ${txHash.slice(0, 10)}...`);
+              // Stablecoin subscriptions are off-chain records paid via x402.
+              if (serviceData.paymentToken !== 'PAS') {
+                await subscriptionApi.createSubscription({
+                  ...(serviceData.serviceId
+                    ? { serviceId: serviceData.serviceId }
+                    : { serviceName: serviceData.service }),
+                  cost: serviceData.cost,
+                  frequency: serviceData.frequency,
+                  recipientAddress: serviceData.recipientAddress,
+                  userAddress: account.address,
+                  autoPay: serviceData.autoPay,
+                  usageData: {
+                    stablecoin: serviceData.paymentToken,
+                  },
+                });
+                onSuccess?.(`Subscription created for ${serviceData.paymentToken} (off-chain x402).`);
+              } else {
+                onSuccess?.('Creating subscription on-chain...');
+                const isPrivate =
+                  !!serviceData.isPrivate &&
+                  !!CONFIDENTIAL_SUBSCRIPTION_CONTRACT_ADDRESS;
+                const { subscriptionId: onChainId, txHash } = isPrivate
+                  ? await confidentialSubscribe(
+                      serviceData.recipientAddress,
+                      serviceData.cost,
+                      serviceData.frequency
+                    )
+                  : await contractSubscribe(
+                      serviceData.recipientAddress,
+                      serviceData.cost,
+                      serviceData.frequency
+                    );
+                await subscriptionApi.createSubscription({
+                  ...(serviceData.serviceId
+                    ? { serviceId: serviceData.serviceId }
+                    : { serviceName: serviceData.service }),
+                  cost: serviceData.cost,
+                  frequency: serviceData.frequency,
+                  recipientAddress: serviceData.recipientAddress,
+                  userAddress: account.address,
+                  autoPay: serviceData.autoPay,
+                  onChainSubscriptionId: onChainId,
+                  onChainContractAddress: isPrivate
+                    ? CONFIDENTIAL_SUBSCRIPTION_CONTRACT_ADDRESS
+                    : SUBSCRIPTION_CONTRACT_ADDRESS || undefined,
+                });
+                onSuccess?.(
+                  `Subscription created on-chain. Tx: ${txHash.slice(0, 10)}...`
+                );
+              }
               setShowCreateForm(false);
               await loadSubscriptions();
               loadSuggestions();
@@ -466,6 +529,7 @@ export default function SubscriptionManager({
             frequency: editingSubscription.frequency,
             recipientAddress: editingSubscription.recipientAddress,
             autoPay: editingSubscription.autoPay,
+            paymentToken: editingSubscription.paymentToken,
           }}
           onSubmit={handleUpdateSubscription}
           onCancel={() => setEditingSubscription(null)}
@@ -502,14 +566,19 @@ export default function SubscriptionManager({
       {/* Payment History Section */}
       {activeSubscriptions.length > 0 && (() => {
         // Collect all payments from all subscriptions
-        const allPayments: Array<{ payment: Payment; serviceName: string }> = [];
+        const allPayments: Array<{
+          payment: Payment;
+          serviceName: string;
+          paymentAsset: Subscription['paymentToken'];
+        }> = [];
         paymentHistory.forEach((payments, subscriptionId) => {
           const subscription = subscriptions.find(s => s.id === subscriptionId);
           if (subscription) {
             payments.forEach(payment => {
               allPayments.push({
                 payment,
-                serviceName: subscription.service || 'Unknown Service'
+                serviceName: subscription.service || 'Unknown Service',
+                paymentAsset: subscription.paymentToken,
               });
             });
           }
@@ -532,11 +601,12 @@ export default function SubscriptionManager({
             </h2>
             <div className="payment-history-list">
               {allPayments.length > 0 ? (
-                allPayments.map(({ payment, serviceName }) => (
+                allPayments.map(({ payment, serviceName, paymentAsset }) => (
                   <PaymentHistoryItem
                     key={payment.id}
                     payment={payment}
                     serviceName={serviceName}
+                    paymentAsset={paymentAsset}
                   />
                 ))
               ) : (

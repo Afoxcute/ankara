@@ -1,24 +1,32 @@
 import { ThirdwebClient } from "thirdweb";
 import { parseUnits } from "viem";
-import { createX402PaymentService, X402PaymentService, PaymentRequirements, USDC_TESTNET } from "./x402PaymentService";
+import {
+  createX402PaymentService,
+  X402PaymentService,
+  PaymentRequirements,
+  USDC_TESTNET,
+  USDT_TESTNET,
+} from "./x402PaymentService";
 import { subscriptionApi, Subscription as ApiSubscription } from "./subscriptionApi";
 import { SUBSCRIPTION_CONTRACT_ADDRESS } from "../contracts/config";
 
 export interface Subscription {
   id: string;
   service: string;
-  cost: number; // in FLOW
+  cost: number; // human amount (PAS or stablecoin depending on paymentToken)
   frequency: 'monthly' | 'weekly' | 'yearly';
   recipientAddress: string; // Service provider wallet address
   lastPaymentDate: Date | null;
   nextPaymentDate: Date;
   isActive: boolean;
   autoPay: boolean;
+  paymentToken: 'PAS' | 'USDC' | 'USDt';
   onChainSubscriptionId?: string | null; // SubscriptionManager contract id when created on-chain
   usageData?: {
     lastUsed?: Date;
     usageCount?: number;
     avgUsagePerMonth?: number;
+    stablecoin?: 'USDC' | 'USDt';
   };
 }
 
@@ -35,6 +43,10 @@ function apiToLocalSubscription(apiSub: ApiSubscription): Subscription {
     costValue = parseFloat(String(apiSub.cost));
   }
 
+  const stablecoin = apiSub.usageData?.stablecoin;
+  const paymentToken: 'PAS' | 'USDC' | 'USDt' =
+    apiSub.onChainSubscriptionId ? 'PAS' : stablecoin === 'USDt' ? 'USDt' : 'USDC';
+
   return {
     id: apiSub.id,
     service: apiSub.service?.name || 'Unknown Service',
@@ -46,10 +58,12 @@ function apiToLocalSubscription(apiSub: ApiSubscription): Subscription {
     isActive: apiSub.isActive,
     autoPay: apiSub.autoPay,
     onChainSubscriptionId: apiSub.onChainSubscriptionId ?? undefined,
+    paymentToken,
     usageData: apiSub.usageData ? {
       lastUsed: apiSub.usageData.lastUsed ? new Date(apiSub.usageData.lastUsed) : undefined,
       usageCount: apiSub.usageData.usageCount,
       avgUsagePerMonth: apiSub.usageData.avgUsagePerMonth,
+      stablecoin: apiSub.usageData.stablecoin,
     } : undefined,
   };
 }
@@ -233,8 +247,9 @@ export class SubscriptionAgent {
         return { success: false, error: 'Wallet not connected' };
       }
 
-      // Convert cost to USDC base units (6 decimals for USDC)
-      // subscription.cost is in USDC (e.g., 0.01 USDC)
+      // Off-chain stablecoin auto-pay uses Polkadot Hub's native stablecoin precompile (6 decimals).
+      const stablecoin = subscription.paymentToken === 'USDt' ? 'USDt' : 'USDC';
+      const assetAddress = stablecoin === 'USDt' ? USDT_TESTNET : USDC_TESTNET;
       const amountInBaseUnits = parseUnits(subscription.cost.toString(), 6).toString();
 
       // Create payment requirements for x402
@@ -242,7 +257,7 @@ export class SubscriptionAgent {
         scheme: 'exact',
         network: 'polkadot-testnet',
         payTo: subscription.recipientAddress,
-        asset: USDC_TESTNET,
+        asset: assetAddress,
         maxAmountRequired: amountInBaseUnits,
         maxTimeoutSeconds: 300, // 5 minutes
         description: `Subscription payment for ${subscription.service}`,

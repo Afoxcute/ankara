@@ -5,9 +5,14 @@ import './PaymentHistoryItem.css';
 interface PaymentHistoryItemProps {
   payment: Payment;
   serviceName: string;
+  paymentAsset: 'PAS' | 'USDC' | 'USDt';
 }
 
-export default function PaymentHistoryItem({ payment, serviceName }: PaymentHistoryItemProps) {
+export default function PaymentHistoryItem({
+  payment,
+  serviceName,
+  paymentAsset,
+}: PaymentHistoryItemProps) {
   const [isExpanded, setIsExpanded] = useState(false);
 
   // Safely convert amount to number (handles Decimal, string, or number)
@@ -54,6 +59,7 @@ export default function PaymentHistoryItem({ payment, serviceName }: PaymentHist
   };
 
   const dateInfo = formatDate(payment.timestamp);
+  const assetLabel = paymentAsset === 'PAS' ? 'PAS' : paymentAsset;
 
   return (
     <div className={`payment-history-item ${isExpanded ? 'expanded' : ''}`}>
@@ -63,7 +69,7 @@ export default function PaymentHistoryItem({ payment, serviceName }: PaymentHist
       >
         <div className="payment-header-left">
           <div className="payment-service-name">{serviceName}</div>
-          <div className="payment-amount">{amount.toFixed(4)} PAS</div>
+          <div className="payment-amount">{amount.toFixed(4)} {assetLabel}</div>
         </div>
         <div className="payment-header-right">
           {getStatusBadge(payment.status)}
@@ -99,7 +105,7 @@ export default function PaymentHistoryItem({ payment, serviceName }: PaymentHist
               </div>
               <div className="detail-item detail-item-amount">
                 <span className="detail-label">Amount:</span>
-                <span className="detail-value detail-amount-value">{amount.toFixed(4)} PAS</span>
+                <span className="detail-value detail-amount-value">{amount.toFixed(4)} {assetLabel}</span>
               </div>
               <div className="detail-item detail-item-network">
                 <span className="detail-label">Network:</span>
