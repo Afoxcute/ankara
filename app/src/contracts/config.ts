@@ -7,13 +7,6 @@ export const SUBSCRIPTION_CONTRACT_ADDRESS =
   (import.meta.env.VITE_SUBSCRIPTION_CONTRACT_ADDRESS as string | undefined) ||
   "0xb2AC0Db5788B222c417F9C1353C5574bC8106C77";
 
-// ERC20 SubscriptionManager addresses (USDC/USDt)
-// These are required for real on-chain stablecoin payments.
-export const SUBSCRIPTION_CONTRACT_ADDRESS_USDC =
-  (import.meta.env.VITE_SUBSCRIPTION_CONTRACT_ADDRESS_USDC as string | undefined) || "";
-export const SUBSCRIPTION_CONTRACT_ADDRESS_USDT =
-  (import.meta.env.VITE_SUBSCRIPTION_CONTRACT_ADDRESS_USDT as string | undefined) || "";
-
 /** Polkadot Hub TestNet */
 export const POLKADOT_TESTNET_CHAIN_ID = 420420417;
 export const POLKADOT_TESTNET_RPC = "https://eth-rpc-testnet.polkadot.io";

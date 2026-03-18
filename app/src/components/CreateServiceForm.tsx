@@ -12,8 +12,7 @@ export interface ServiceFormData {
   /**
    * How payments are executed:
    * - `PAS`: on-chain SubscriptionManagerFLOW pay() (native).
-   * - `USDC`/`USDt`: real on-chain ERC20 payments via SubscriptionManager (approve + pay).
-   * - `PAS_X402`: off-chain x402 record (used only when you explicitly choose PAS_X402).
+   * - `USDC`/`USDt`: off-chain x402 stablecoin payments via ERC20 precompile.
    */
   paymentToken: 'PAS' | 'PAS_X402' | 'USDC' | 'USDt';
   /** When true, create a confidential (FHE) subscription on Sepolia. */
@@ -190,8 +189,8 @@ export default function CreateServiceForm({
               >
                 <option value="PAS">Native PAS (on-chain)</option>
               <option value="PAS_X402">PAS (x402, off-chain)</option>
-                <option value="USDC">USDC (stablecoin, on-chain)</option>
-                <option value="USDt">USDt (stablecoin, on-chain)</option>
+                <option value="USDC">USDC (stablecoin, off-chain x402)</option>
+                <option value="USDt">USDt (stablecoin, off-chain x402)</option>
               </select>
             </div>
 

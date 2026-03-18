@@ -9,6 +9,7 @@ import {
   PAS_TESTNET,
 } from "./x402PaymentService";
 import { subscriptionApi, Subscription as ApiSubscription } from "./subscriptionApi";
+import { SUBSCRIPTION_CONTRACT_ADDRESS } from "../contracts/config";
 
 export interface Subscription {
   id: string;
@@ -46,11 +47,7 @@ function apiToLocalSubscription(apiSub: ApiSubscription): Subscription {
   const stablecoin = apiSub.usageData?.stablecoin;
   const paymentToken: Subscription['paymentToken'] =
     apiSub.onChainSubscriptionId
-      ? stablecoin === 'USDt'
-        ? 'USDt'
-        : stablecoin === 'USDC'
-          ? 'USDC'
-          : 'PAS'
+      ? 'PAS'
       : stablecoin === 'USDt'
         ? 'USDt'
         : stablecoin === 'PAS'
@@ -137,10 +134,8 @@ export class SubscriptionAgent {
     }
 
     try {
-      // Don't filter by a single contract address, because we can now have:
-      // - PAS on SubscriptionManagerFLOW
-      // - USDC/USDT on ERC20 SubscriptionManager instances
-      const apiSubscriptions = await subscriptionApi.getUserSubscriptions(this.userAddress);
+      const contractAddress = SUBSCRIPTION_CONTRACT_ADDRESS || undefined;
+      const apiSubscriptions = await subscriptionApi.getUserSubscriptions(this.userAddress, contractAddress);
       this.subscriptions.clear();
       apiSubscriptions.forEach(apiSub => {
         const localSub = apiToLocalSubscription(apiSub);
