@@ -2,27 +2,27 @@ import 'dotenv/config'
 import { Chain, Address, createPublicClient, createWalletClient, http, WalletClient } from 'viem'
 import { privateKeyToAccount } from 'viem/accounts'
 
-// Flow EVM Testnet configuration
-const flowTestnet: Chain = {
-  id: 545,
-  name: 'Flow EVM Testnet',
+// Polkadot Hub TestNet configuration
+const polkadotHubTestnet: Chain = {
+  id: 420420417,
+  name: 'Polkadot Hub TestNet',
   nativeCurrency: {
-    name: 'FLOW',
-    symbol: 'FLOW',
+    name: 'Paseo',
+    symbol: 'PAS',
     decimals: 18,
   },
   rpcUrls: {
     default: {
-      http: ['https://testnet.evm.nodes.onflow.org'],
+      http: ['https://eth-rpc-testnet.polkadot.io'],
     },
     public: {
-      http: ['https://testnet.evm.nodes.onflow.org'],
+      http: ['https://eth-rpc-testnet.polkadot.io'],
     },
   },
   blockExplorers: {
     default: {
-      name: 'Flow EVM Testnet Explorer',
-      url: 'https://evm-testnet.flowscan.io',
+      name: 'Polkadot Hub TestNet Explorer',
+      url: 'https://blockscout-testnet.polkadot.io',
     },
   },
 }
@@ -34,12 +34,12 @@ interface NetworkConfig {
     nativeTokenAddress: Address
 }
 
-// Network configuration (Flow EVM Testnet)
+// Network configuration (Polkadot Hub TestNet)
 const networkConfig: NetworkConfig = {
-    rpcProviderUrl: 'https://testnet.evm.nodes.onflow.org',
-    blockExplorer: 'https://evm-testnet.flowscan.io',
-    chain: flowTestnet,
-    nativeTokenAddress: '0x0000000000000000000000000000000000000000' as Address, // Native FLOW token
+    rpcProviderUrl: 'https://eth-rpc-testnet.polkadot.io',
+    blockExplorer: 'https://blockscout-testnet.polkadot.io',
+    chain: polkadotHubTestnet,
+    nativeTokenAddress: '0x0000000000000000000000000000000000000000' as Address, // Native PAS token
 }
 
 // Helper functions

@@ -309,7 +309,7 @@ export class SubscriptionService {
     subscriptionId: string,
     amount: number,
     transactionHash: string,
-    network: string = 'flow-testnet',
+    network: string = 'polkadot-testnet',
     status: string = 'completed',
     errorMessage?: string
   ) {

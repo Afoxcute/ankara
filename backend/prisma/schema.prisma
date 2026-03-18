@@ -60,7 +60,7 @@ model Payment {
   subscriptionId   String
   amount            Decimal   @db.Decimal(18, 6) // Amount paid in USDC
   transactionHash  String   @unique
-  network           String   @default("flow-testnet") // Network where payment was made
+  network           String   @default("polkadot-testnet") // Network where payment was made
   status            String   @default("completed") // completed, failed, pending
   errorMessage      String?
   timestamp         DateTime @default(now())

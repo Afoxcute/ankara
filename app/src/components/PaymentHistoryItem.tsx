@@ -50,7 +50,7 @@ export default function PaymentHistoryItem({ payment, serviceName }: PaymentHist
   };
 
   const getExplorerUrl = (hash: string, _network?: string) => {
-    return `https://evm-testnet.flowscan.io/tx/${hash}`;
+    return `https://blockscout-testnet.polkadot.io/tx/${hash}`;
   };
 
   const dateInfo = formatDate(payment.timestamp);
@@ -63,7 +63,7 @@ export default function PaymentHistoryItem({ payment, serviceName }: PaymentHist
       >
         <div className="payment-header-left">
           <div className="payment-service-name">{serviceName}</div>
-          <div className="payment-amount">{amount.toFixed(4)} FLOW</div>
+          <div className="payment-amount">{amount.toFixed(4)} PAS</div>
         </div>
         <div className="payment-header-right">
           {getStatusBadge(payment.status)}
@@ -99,7 +99,7 @@ export default function PaymentHistoryItem({ payment, serviceName }: PaymentHist
               </div>
               <div className="detail-item detail-item-amount">
                 <span className="detail-label">Amount:</span>
-                <span className="detail-value detail-amount-value">{amount.toFixed(4)} FLOW</span>
+                <span className="detail-value detail-amount-value">{amount.toFixed(4)} PAS</span>
               </div>
               <div className="detail-item detail-item-network">
                 <span className="detail-label">Network:</span>

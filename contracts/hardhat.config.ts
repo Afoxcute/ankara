@@ -16,10 +16,10 @@ const config: HardhatUserConfig = {
   },
   networks: {
     hardhat: {},
-    // Primary: use for SubscriptionManagerFLOW. yarn deploy:flow / deploy:testnet → Flow testnet.
-    "flow-testnet": {
-      url: "https://testnet.evm.nodes.onflow.org",
-      chainId: 545,
+    // Primary: Polkadot Hub TestNet for contract deployment.
+    "polkadot-testnet": {
+      url: "https://eth-rpc-testnet.polkadot.io",
+      chainId: 420420417,
       accounts,
     },
     // Optional: only for ConfidentialSubscriptionManager (Zama FHE). Use only with --network sepolia.
@@ -29,7 +29,7 @@ const config: HardhatUserConfig = {
       accounts,
     },
   },
-  defaultNetwork: "flow-testnet",
+  defaultNetwork: "polkadot-testnet",
   paths: {
     sources: "./contracts",
     tests: "./test",

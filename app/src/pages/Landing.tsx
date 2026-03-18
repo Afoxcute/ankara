@@ -22,22 +22,22 @@ export default function Landing({ onEnterApp }: LandingProps) {
           <h1 className="landing-title">
             Smart subscriptions
             <br />
-            <span className="landing-title-accent">on FLOW</span>
+            <span className="landing-title-accent">on Polkadot</span>
           </h1>
           <p className="landing-lead">
-            Create and manage recurring payments in native FLOW. No stablecoins, no approvals—just connect your wallet and pay when due.
+            Create and manage recurring payments in native PAS or stablecoins (USDC, USDt). Connect your wallet and pay when due.
           </p>
           <div className="landing-hero-actions">
             <button type="button" className="landing-btn landing-btn-primary" onClick={onEnterApp}>
               Get started
             </button>
             <a
-              href="https://evm-testnet.flowscan.io"
+              href="https://blockscout-testnet.polkadot.io"
               target="_blank"
               rel="noopener noreferrer"
               className="landing-btn landing-btn-ghost"
             >
-              View on Flow Explorer
+              View on Polkadot Explorer
             </a>
           </div>
         </div>
@@ -50,15 +50,15 @@ export default function Landing({ onEnterApp }: LandingProps) {
             <li className="landing-feature">
               <span className="landing-feature-icon">💧</span>
               <div>
-                <strong>Pay in FLOW</strong>
-                <p>No ERC20 approvals. Send native FLOW with one click when a payment is due.</p>
+                <strong>Pay in PAS or stablecoins</strong>
+                <p>Pay with native PAS or Polkadot Hub stablecoins (USDC, USDt) with one click when a payment is due.</p>
               </div>
             </li>
             <li className="landing-feature">
               <span className="landing-feature-icon">📋</span>
               <div>
                 <strong>On-chain subscriptions</strong>
-                <p>Create weekly, monthly, or yearly subscriptions on Flow EVM. Recipients get FLOW directly.</p>
+                <p>Create weekly, monthly, or yearly subscriptions on Polkadot Hub. Recipients get PAS directly.</p>
               </div>
             </li>
             <li className="landing-feature">
@@ -75,7 +75,7 @@ export default function Landing({ onEnterApp }: LandingProps) {
       <section className="landing-cta">
         <div className="landing-cta-inner">
           <h2 className="landing-cta-title">Ready to manage your subscriptions?</h2>
-          <p className="landing-cta-text">Connect your wallet on Flow Testnet and create your first subscription.</p>
+          <p className="landing-cta-text">Connect your wallet on Polkadot Hub TestNet and create your first subscription.</p>
           <button type="button" className="landing-btn landing-btn-primary landing-btn-lg" onClick={onEnterApp}>
             Open app
           </button>
@@ -85,7 +85,7 @@ export default function Landing({ onEnterApp }: LandingProps) {
       <footer className="landing-footer">
         <div className="landing-footer-inner">
           <span className="landing-logo">🤖 Bumpa</span>
-          <p className="landing-footer-tagline">Smart subscription manager on Flow EVM</p>
+          <p className="landing-footer-tagline">Smart subscription manager on Polkadot Hub</p>
         </div>
       </footer>
     </div>

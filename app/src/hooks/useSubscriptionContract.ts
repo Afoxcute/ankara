@@ -13,14 +13,14 @@ import {
   useSendTransaction,
   useSendAndConfirmTransaction,
 } from "thirdweb/react";
-import { FLOW_TESTNET } from "../services/x402PaymentService";
+import { POLKADOT_HUB_TESTNET } from "../services/x402PaymentService";
 import { SUBSCRIPTION_CONTRACT_ADDRESS } from "../contracts/config";
 import { SUBSCRIPTION_ABI_FLOW } from "../contracts/subscriptionContract";
 import { subscriptionApi } from "../services/subscriptionApi";
 import { parseUnits, encodeEventTopics } from "viem";
 
-/** FLOW uses 18 decimals (wei). */
-const FLOW_DECIMALS = 18;
+/** PAS uses 18 decimals (wei). */
+const PAS_DECIMALS = 18;
 
 const SUBSCRIPTION_CREATED_ABI = [
   {
@@ -45,12 +45,12 @@ const [SUBSCRIPTION_CREATED_TOPIC_0] = encodeEventTopics({
 export function getSubscriptionManagerContract(client: ThirdwebClient) {
   if (!SUBSCRIPTION_CONTRACT_ADDRESS) {
     throw new Error(
-      "VITE_SUBSCRIPTION_CONTRACT_ADDRESS is not set. Deploy SubscriptionManagerFLOW: cd contracts && yarn deploy:flow then set the env."
+      "VITE_SUBSCRIPTION_CONTRACT_ADDRESS is not set. Deploy SubscriptionManager: cd contracts && yarn deploy then set the env."
     );
   }
   return getContract({
     client,
-    chain: FLOW_TESTNET,
+    chain: POLKADOT_HUB_TESTNET,
     address: SUBSCRIPTION_CONTRACT_ADDRESS as `0x${string}`,
     abi: SUBSCRIPTION_ABI_FLOW,
   });
@@ -67,7 +67,7 @@ function frequencyToEnum(
 }
 
 async function fetchReceipt(txHash: string): Promise<{ logs?: { topics?: string[] }[] } | null> {
-  const res = await fetch(FLOW_TESTNET.rpc, {
+  const res = await fetch(POLKADOT_HUB_TESTNET.rpc, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -107,7 +107,7 @@ export function useSubscriptionContract(client: ThirdwebClient) {
       amountPerCycleFlow: number,
       frequency: "weekly" | "monthly" | "yearly"
     ): Promise<{ subscriptionId: string; txHash: string }> => {
-      const amountWei = parseUnits(amountPerCycleFlow.toString(), FLOW_DECIMALS);
+      const amountWei = parseUnits(amountPerCycleFlow.toString(), PAS_DECIMALS);
       const tx = prepareContractCall({
         contract,
         method: "subscribe",
@@ -181,7 +181,7 @@ export function useSubscriptionContractPay(client: ThirdwebClient) {
   const { pay, isPending: contractPending } = useSubscriptionContract(client);
   const contract = getSubscriptionManagerContract(client);
 
-  /** Pay with native FLOW. No approval needed; send value with the pay() call. */
+  /** Pay with native PAS. No approval needed; send value with the pay() call. */
   const payWithApproval = useCallback(
     async (
       onChainSubscriptionId: string,
@@ -207,13 +207,13 @@ export function useSubscriptionContractPay(client: ThirdwebClient) {
           `Payment not due yet on-chain. Next due: ${dateStr}. You can pay again then.`
         );
       }
-      const amountWei = parseUnits(amountFlow.toString(), FLOW_DECIMALS);
+      const amountWei = parseUnits(amountFlow.toString(), PAS_DECIMALS);
       const txHash = await pay(onChainSubscriptionId, amountWei);
       await subscriptionApi.recordPayment(
         subscriptionIdBackend,
         amountFlow,
         txHash,
-        "flow-testnet",
+        "polkadot-testnet",
         "completed"
       );
       return { txHash };

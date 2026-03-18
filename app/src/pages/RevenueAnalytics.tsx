@@ -389,7 +389,7 @@ export default function RevenueAnalytics() {
                                 </td>
                                 <td>
                                   <a
-                                    href={`https://evm-testnet.flowscan.io/tx/${receipt.transactionHash}`}
+                                    href={`https://blockscout-testnet.polkadot.io/tx/${receipt.transactionHash}`}
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     className="tx-link"
@@ -440,7 +440,7 @@ export default function RevenueAnalytics() {
                                 </td>
                                 <td>
                                   <a
-                                    href={`https://evm-testnet.flowscan.io/tx/${receipt.transactionHash}`}
+                                    href={`https://blockscout-testnet.polkadot.io/tx/${receipt.transactionHash}`}
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     className="tx-link"

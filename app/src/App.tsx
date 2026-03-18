@@ -6,14 +6,14 @@ import { NotificationToasts } from "./components/NotificationCenter";
 import SubscriptionManager from "./components/SubscriptionManager";
 import RevenueAnalytics from "./pages/RevenueAnalytics";
 import Landing from "./pages/Landing";
-import FLOWBalance from "./components/FLOWBalance";
+import PASBalance from "./components/FLOWBalance";
 
 import {
   ThirdwebClient,
 } from "thirdweb";
 import { ConnectButton } from "thirdweb/react";
 import { createWallet, inAppWallet } from "thirdweb/wallets";
-import { FLOW_TESTNET } from "./services/x402PaymentService";
+import { POLKADOT_HUB_TESTNET } from "./services/x402PaymentService";
 import { createSubscriptionAgent, SubscriptionAgent } from "./services/subscriptionService";
 
 
@@ -64,11 +64,11 @@ export default function App({ thirdwebClient }: AppProps) {
           </div>
           <div className="header-actions">
             <NotificationButton />
-            <FLOWBalance client={thirdwebClient} />
+            <PASBalance client={thirdwebClient} />
             <ConnectButton
               client={thirdwebClient}
               wallets={wallets}
-              chain={FLOW_TESTNET}
+              chain={POLKADOT_HUB_TESTNET}
             />
           </div>
         </div>

@@ -34,8 +34,8 @@ PORT=5000
 # Optional: Wallet Configuration (for contract interactions)
 # WALLET_PRIVATE_KEY=0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef
 
-# Optional: RPC Configuration (Flow EVM Testnet)
-# RPC_PROVIDER_URL=https://testnet.evm.nodes.onflow.org
+# Optional: RPC Configuration (Polkadot Hub TestNet)
+# RPC_PROVIDER_URL=https://eth-rpc-testnet.polkadot.io
 
 # Optional: Pinata IPFS Configuration
 # PINATA_JWT=
@@ -43,7 +43,7 @@ PORT=5000
 # Optional: Yakoa API Configuration
 # YAKOA_API_KEY=
 # YAKOA_SUBDOMAIN=
-# YAKOA_NETWORK=flow_testnet
+# YAKOA_NETWORK=polkadot_testnet
 
 # Optional: NFT Contract Configuration
 # NFT_CONTRACT_ADDRESS=0x0000000000000000000000000000000000000000
@@ -80,11 +80,11 @@ If `REDIS_URL` is not set in `.env`, the system will use:
 
 ## Network Configuration
 
-- **Network**: Flow EVM Testnet
-- **Chain ID**: 545
-- **RPC URL**: https://testnet.evm.nodes.onflow.org
-- **Explorer**: https://evm-testnet.flowscan.io
-- **Native Token**: FLOW
+- **Network**: Polkadot Hub TestNet
+- **Chain ID**: 420420417
+- **RPC URL**: https://eth-rpc-testnet.polkadot.io
+- **Explorer**: https://blockscout-testnet.polkadot.io
+- **Native Token**: PAS
 
 ## To Get Your Real Credentials
 

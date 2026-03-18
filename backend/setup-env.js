@@ -17,8 +17,8 @@ const envContent = `# Wallet Configuration
 # Replace with your actual wallet private key (without 0x prefix)
 WALLET_PRIVATE_KEY=1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef
 
-# RPC Configuration (Cronos Testnet)
-RPC_PROVIDER_URL=https://evm-t3.cronos.org
+# RPC Configuration (Polkadot Hub TestNet)
+RPC_PROVIDER_URL=https://eth-rpc-testnet.polkadot.io
 
 # Pinata IPFS Configuration
 # Get your JWT from https://app.pinata.cloud/developers/api-keys
@@ -28,7 +28,7 @@ PINATA_JWT=your_pinata_jwt_here
 # Get these from your Yakoa account
 YAKOA_API_KEY=your_yakoa_api_key_here
 YAKOA_SUBDOMAIN=your_subdomain
-YAKOA_NETWORK=cronos_testnet
+YAKOA_NETWORK=polkadot_testnet
 
 # NFT Contract Configuration
 NFT_CONTRACT_ADDRESS=0x0000000000000000000000000000000000000000
@@ -42,7 +42,7 @@ try {
   console.log('✅ Created .env file with default values');
   console.log('\n📝 Next steps:');
   console.log('1. Edit the .env file with your actual credentials');
-  console.log('2. Get your wallet private key from your Cronos testnet wallet');
+  console.log('2. Get your wallet private key from your Polkadot Hub TestNet wallet');
   console.log('3. Get your Pinata JWT from https://app.pinata.cloud/developers/api-keys');
   console.log('4. Configure Yakoa API keys if needed');
   console.log('\n⚠️  Important: Never commit the .env file to version control!');

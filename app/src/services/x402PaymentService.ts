@@ -2,39 +2,47 @@ import { ThirdwebClient } from "thirdweb";
 import { ethers } from "ethers";
 import axios from "axios";
 
-// Network Constants - Flow EVM Testnet (primary testnet)
-export const FLOW_TESTNET = {
-  id: 545,
-  name: 'Flow EVM Testnet',
+// Network Constants - Polkadot Hub TestNet (primary testnet)
+export const POLKADOT_HUB_TESTNET = {
+  id: 420420417,
+  name: 'Polkadot Hub TestNet',
   nativeCurrency: {
-    name: 'FLOW',
-    symbol: 'FLOW',
+    name: 'Paseo',
+    symbol: 'PAS',
     decimals: 18,
   },
-  rpc: 'https://testnet.evm.nodes.onflow.org',
+  rpc: 'https://eth-rpc-testnet.polkadot.io',
   rpcUrls: {
     default: {
-      http: ['https://testnet.evm.nodes.onflow.org'],
+      http: ['https://eth-rpc-testnet.polkadot.io'],
     },
     public: {
-      http: ['https://testnet.evm.nodes.onflow.org'],
+      http: ['https://eth-rpc-testnet.polkadot.io'],
     },
   },
   blockExplorers: [{
-    name: 'Flow EVM Testnet Explorer',
-    url: 'https://evm-testnet.flowscan.io',
+    name: 'Polkadot Hub TestNet Explorer',
+    url: 'https://blockscout-testnet.polkadot.io',
   }],
 };
 
-// Token Contracts
-export const USDC_TESTNET = '0xc01efAaF7C5C61bEbFAeb358E1161b537b8bC0e0';
-export const USDC_MAINNET = '0xf951eC28187D9E5Ca673Da8FE6757E6f0Be5F77C';
+// Polkadot Hub native stablecoin ERC20 precompile addresses (derived from Assets pallet IDs).
+// These precompiles implement standard ERC20 but NOT metadata (name/symbol/decimals).
+export const USDC_TESTNET = '0x0000053900000000000000000000000001200000'; // Asset ID 1337
+export const USDT_TESTNET = '0x000007C000000000000000000000000001200000'; // Asset ID 1984
+export const USDC_MAINNET = '0x0000053900000000000000000000000001200000';
+export const USDT_MAINNET = '0x000007C000000000000000000000000001200000';
+
+// Off-chain metadata for precompile tokens (the precompile does not expose name/symbol/decimals)
+export const STABLECOIN_METADATA: Record<string, { name: string; symbol: string; decimals: number }> = {
+  [USDC_TESTNET.toLowerCase()]: { name: 'USD Coin', symbol: 'USDC', decimals: 6 },
+  [USDT_TESTNET.toLowerCase()]: { name: 'Tether USD', symbol: 'USDt', decimals: 6 },
+};
 
 // Facilitator URL (set VITE_FACILITATOR_URL in .env for payment settlement)
 export const FACILITATOR_URL = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_FACILITATOR_URL) || '';
 
 // EIP-712 Domain for USDC (default - actual domain is queried from contract)
-// Note: We're using USDC.e (not USDX), so the domain is typically "USD Coin"
 export const TOKEN_DOMAIN = {
   name: "USD Coin",
   version: "1",
@@ -104,8 +112,8 @@ export interface SettleResponse {
  * Handles payment header generation, verification, and settlement
  */
 export class X402PaymentService {
-  constructor(_client: ThirdwebClient, _network: 'flow-testnet' = 'flow-testnet') {
-    // Only Flow EVM Testnet is supported; _network kept for API compatibility.
+  constructor(_client: ThirdwebClient, _network: 'polkadot-testnet' = 'polkadot-testnet') {
+    // Only Polkadot Hub TestNet is supported; _network kept for API compatibility.
   }
 
   /**
@@ -125,7 +133,15 @@ export class X402PaymentService {
    * Tries multiple methods to get the domain name
    */
   private async getTokenDomain(asset: string): Promise<{ name: string; version: string } | null> {
-    const rpcUrl = 'https://testnet.evm.nodes.onflow.org';
+    // Polkadot Hub ERC20 precompiles don't expose name()/symbol()/decimals(),
+    // so check the local metadata map first before hitting the RPC.
+    const known = STABLECOIN_METADATA[asset.toLowerCase()];
+    if (known) {
+      console.log(`Using known stablecoin metadata for ${known.symbol}:`, known.name);
+      return { name: known.name, version: "1" };
+    }
+
+    const rpcUrl = 'https://eth-rpc-testnet.polkadot.io';
     const provider = new ethers.JsonRpcProvider(rpcUrl);
     
     try {
@@ -199,12 +215,11 @@ export class X402PaymentService {
     const validAfter = 0; // Valid immediately
     const validBefore = Math.floor(Date.now() / 1000) + maxTimeoutSeconds;
 
-    // Get chain ID as number (required for EIP-712) - Flow EVM Testnet
-    const chainId = 545;
+    // Get chain ID as number (required for EIP-712) - Polkadot Hub TestNet
+    const chainId = 420420417;
 
     // Try to get the actual domain from the contract, fallback to common values
-    // For USDC.e (0xc01efAaF7C5C61bEbFAeb358E1161b537b8bC0e0), the domain is typically "USD Coin"
-    // The x402 guide mentions "USDX Coin" for USDX token, but we're using USDC.e
+    // For USDC on Polkadot Hub, the domain is "USD Coin"
     let domainName: string | undefined;
     let domainVersion: string | undefined;
     
@@ -219,16 +234,16 @@ export class X402PaymentService {
       domainName = contractDomain?.name;
       domainVersion = contractDomain?.version;
       
-      // If contract query failed, use "USD Coin" for USDC.e (standard USDC domain)
+      // If contract query failed, use "USD Coin" for USDC (standard USDC domain)
       if (!domainName) {
         console.log('Contract domain query failed, using standard USDC domain: "USD Coin"');
-        domainName = "USD Coin"; // Standard USDC domain (we're using USDC.e, not USDX)
+        domainName = "USD Coin";
         domainVersion = "1";
       }
     }
     
     console.log('Using EIP-712 domain name:', domainName, 'version:', domainVersion);
-    console.log('Token contract:', asset, '(Flow EVM Testnet)');
+    console.log('Token contract:', asset, '(Polkadot Hub TestNet)');
 
     // Set up EIP-712 domain
     // The domain name must match the token contract's EIP-712 domain exactly
@@ -425,7 +440,7 @@ export class X402PaymentService {
     types: any,
     message: any
   ): Promise<string> {
-    const rpcUrl = 'https://testnet.evm.nodes.onflow.org';
+    const rpcUrl = 'https://eth-rpc-testnet.polkadot.io';
     try {
       const provider = this.getPreferredEVMProvider();
       if (provider) {
@@ -433,7 +448,7 @@ export class X402PaymentService {
           const ethersProvider = new ethers.BrowserProvider(provider);
           await provider.request({ method: 'eth_requestAccounts' });
           const network = await ethersProvider.getNetwork();
-          const expectedChainId = 545n;
+          const expectedChainId = 420420417n;
           if (network.chainId !== expectedChainId) {
             console.warn(`Network mismatch: expected ${expectedChainId}, got ${network.chainId}`);
             try {
@@ -445,10 +460,10 @@ export class X402PaymentService {
               if (switchError.code === 4902) {
                 const chainConfig = {
                   chainId: `0x${expectedChainId.toString(16)}`,
-                  chainName: 'Flow EVM Testnet',
-                  nativeCurrency: { name: 'FLOW', symbol: 'FLOW', decimals: 18 },
-                  rpcUrls: ['https://testnet.evm.nodes.onflow.org'],
-                  blockExplorerUrls: ['https://evm-testnet.flowscan.io'],
+                  chainName: 'Polkadot Hub TestNet',
+                  nativeCurrency: { name: 'Paseo', symbol: 'PAS', decimals: 18 },
+                  rpcUrls: ['https://eth-rpc-testnet.polkadot.io'],
+                  blockExplorerUrls: ['https://blockscout-testnet.polkadot.io'],
                 };
                 await provider.request({
                   method: 'wallet_addEthereumChain',
@@ -479,7 +494,7 @@ export class X402PaymentService {
 
       // Priority 2: Use JsonRpcProvider with private key if available
       if (account.privateKey) {
-        const provider = new ethers.JsonRpcProvider(rpcUrl);
+        const provider = new ethers.JsonRpcProvider(rpcUrl);  
         const wallet = new ethers.Wallet(account.privateKey, provider);
         
         // Ensure domain chainId is a number
@@ -717,8 +732,7 @@ export class X402PaymentService {
         "USDX Coin", 
         "USD Coin (Cronos)",
         "USDC",
-        "USDC.e",
-        "USD Coin on Cronos"
+        "Tether USD"
       ];
       
       for (const altDomain of alternativeDomains) {
@@ -762,7 +776,7 @@ export class X402PaymentService {
  */
 export function createX402PaymentService(
   client: ThirdwebClient,
-  network: 'flow-testnet' = 'flow-testnet'
+  network: 'polkadot-testnet' = 'polkadot-testnet'
 ): X402PaymentService {
   return new X402PaymentService(client, network);
 }

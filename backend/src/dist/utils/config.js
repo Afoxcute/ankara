@@ -8,36 +8,36 @@ const viem_1 = require("viem");
 const accounts_1 = require("viem/accounts");
 const dotenv_1 = __importDefault(require("dotenv"));
 dotenv_1.default.config();
-// Etherlink testnet configuration
-const etherlinkTestnet = {
-    id: 128123,
-    name: 'Etherlink Testnet',
+// Polkadot Hub TestNet configuration
+const polkadotHubTestnet = {
+    id: 420420417,
+    name: 'Polkadot Hub TestNet',
     nativeCurrency: {
-        name: 'HBAR',
-        symbol: 'HBAR',
+        name: 'Paseo',
+        symbol: 'PAS',
         decimals: 18,
     },
     rpcUrls: {
         default: {
-            http: ['https://node.ghostnet.etherlink.com'],
+            http: ['https://eth-rpc-testnet.polkadot.io'],
         },
         public: {
-            http: ['https://node.ghostnet.etherlink.com'],
+            http: ['https://eth-rpc-testnet.polkadot.io'],
         },
     },
     blockExplorers: {
         default: {
-            name: 'Etherlink Testnet Explorer',
-            url: 'https://testnet.explorer.etherlink.com',
+            name: 'Polkadot Hub TestNet Explorer',
+            url: 'https://blockscout-testnet.polkadot.io',
         },
     },
 };
 // Network configuration
 const networkConfig = {
-    rpcProviderUrl: 'https://node.ghostnet.etherlink.com',
-    blockExplorer: 'https://testnet.explorer.etherlink.com',
-    chain: etherlinkTestnet,
-    nativeTokenAddress: '0x0000000000000000000000000000000000000000', // Native HBAR token
+    rpcProviderUrl: 'https://eth-rpc-testnet.polkadot.io',
+    blockExplorer: 'https://blockscout-testnet.polkadot.io',
+    chain: polkadotHubTestnet,
+    nativeTokenAddress: '0x0000000000000000000000000000000000000000', // Native PAS token
 };
 // Helper functions
 const validateEnvironmentVars = () => {

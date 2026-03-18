@@ -47,7 +47,7 @@ export class FailedPaymentTracker {
           subscriptionId,
           amount: amount,
           transactionHash: '', // No transaction hash for failed payments
-          network: 'flow-testnet',
+          network: 'polkadot-testnet',
           status: 'failed',
           errorMessage: `${categorized.category}: ${categorized.message}`,
           // Store metadata in errorMessage for now

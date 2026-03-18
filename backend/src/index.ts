@@ -1,15 +1,12 @@
+import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
-import dotenv from 'dotenv';
 import bodyParser from 'body-parser';
 
 import subscriptionRoutes from './routes/subscriptions';
 import serviceRoutes from './routes/services';
 import './queue/autoPayWorker'; // Initialize auto-pay worker
 import { startPaymentScheduler } from './services/paymentScheduler';
-
-// Load environment variables
-dotenv.config();
 
 // Test database connection on startup
 import { prisma } from './lib/prisma';

@@ -4,8 +4,8 @@ Hardhat project for the on-chain subscription system used by the Bumpa frontend.
 
 ## Contracts
 
-- **SubscriptionManagerFLOW** (recommended): Same subscription model but **payments in native FLOW**. No ERC20; `pay(subscriptionId)` is `payable` and forwards FLOW to the recipient. Amounts in wei (18 decimals).
-- **SubscriptionManager**: ERC20-based (e.g. USDC). Use `SubscriptionManagerFLOW` for FLOW payments.
+- **SubscriptionManagerFLOW** (recommended): Same subscription model but **payments in native PAS**. No ERC20; `pay(subscriptionId)` is `payable` and forwards PAS to the recipient. Amounts in wei (18 decimals).
+- **SubscriptionManager**: ERC20-based, using Polkadot Hub native stablecoins (USDC at `0x0000053900000000000000000000000001200000`, USDt at `0x000007C000000000000000000000000001200000`) via ERC20 precompile.
 
 ## Setup
 
@@ -15,13 +15,13 @@ yarn install
 yarn compile
 ```
 
-## Deploy (Flow EVM Testnet)
+## Deploy (Polkadot Hub TestNet)
 
 1. Create `.env` in `contracts/` with:
    ```
-   PRIVATE_KEY=0x...   # Deployer wallet private key (with FLOW for gas)
+   PRIVATE_KEY=0x...   # Deployer wallet private key (with PAS for gas)
    ```
-2. **Native FLOW (recommended):**
+2. **Native PAS (recommended):**
    ```bash
    yarn deploy:flow
    ```
@@ -35,7 +35,7 @@ yarn compile
    VITE_SUBSCRIPTION_CONTRACT_ADDRESS=<deployed address>
    ```
 
-**Current SubscriptionManagerFLOW (Flow EVM Testnet):** `0xb2AC0Db5788B222c417F9C1353C5574bC8106C77`
+**Current SubscriptionManagerFLOW (Polkadot Hub TestNet):** `0xb2AC0Db5788B222c417F9C1353C5574bC8106C77`
 
 ## Export ABI for frontend
 
@@ -63,6 +63,6 @@ yarn test
 
 ## Network config
 
-- **Flow EVM Testnet**: chainId 545, RPC `https://testnet.evm.nodes.onflow.org`, Explorer `https://evm-testnet.flowscan.io`
+- **Polkadot Hub TestNet**: chainId 420420417, RPC `https://eth-rpc-testnet.polkadot.io`, Explorer `https://blockscout-testnet.polkadot.io`
 
-For ERC20 deploy, set `USDC_ADDRESS` in `.env` if different from the default.
+For ERC20 deploy, set `USDC_ADDRESS` in `.env` if different from the default Polkadot Hub USDC precompile address.

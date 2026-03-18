@@ -1,5 +1,5 @@
 import { useActiveAccount, useWalletBalance } from "thirdweb/react";
-import { FLOW_TESTNET } from "../services/x402PaymentService";
+import { POLKADOT_HUB_TESTNET } from "../services/x402PaymentService";
 
 interface FLOWBalanceProps {
   client: unknown;
@@ -8,7 +8,7 @@ interface FLOWBalanceProps {
 export default function FLOWBalance({ client }: FLOWBalanceProps) {
   const account = useActiveAccount();
   const { data: balance, isLoading } = useWalletBalance({
-    chain: FLOW_TESTNET,
+    chain: POLKADOT_HUB_TESTNET,
     address: account?.address,
     client: client as any,
   });
@@ -24,13 +24,13 @@ export default function FLOWBalance({ client }: FLOWBalanceProps) {
         fontSize: "0.875rem",
         color: "var(--color-text-secondary)",
       }}>
-        Loading FLOW...
+        Loading PAS...
       </div>
     );
   }
 
   const displayBalance = balance?.displayValue ?? "0";
-  const symbol = balance?.symbol ?? "FLOW";
+  const symbol = balance?.symbol ?? "PAS";
 
   return (
     <div style={{

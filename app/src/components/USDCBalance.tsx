@@ -1,34 +1,33 @@
 import { useActiveAccount, useReadContract } from "thirdweb/react";
 import { getContract } from "thirdweb";
-import { FLOW_TESTNET, USDC_TESTNET } from "../services/x402PaymentService";
+import { POLKADOT_HUB_TESTNET, USDC_TESTNET, STABLECOIN_METADATA } from "../services/x402PaymentService";
 import { formatUnits } from "viem";
 
 interface USDCBalanceProps {
   client: any;
 }
 
+const meta = STABLECOIN_METADATA[USDC_TESTNET.toLowerCase()];
+
 export default function USDCBalance({ client }: USDCBalanceProps) {
   const account = useActiveAccount();
 
-  // Get USDC contract - always call getContract, even if account is null
   const usdcContract = getContract({
     address: USDC_TESTNET as `0x${string}`,
-    chain: FLOW_TESTNET,
+    chain: POLKADOT_HUB_TESTNET,
     client: client,
   });
 
-  // Always call useReadContract hook - use enabled option to control when it runs
   const { data: balance, isLoading } = useReadContract({
     contract: usdcContract,
     method: "function balanceOf(address owner) view returns (uint256)",
     params: account?.address ? [account.address] : [undefined as any],
     queryOptions: {
-      enabled: !!account && !!account.address, // Only fetch when account exists
-      refetchInterval: 10000, // Refetch every 10 seconds
+      enabled: !!account && !!account.address,
+      refetchInterval: 10000,
     },
   });
 
-  // Early return after all hooks have been called
   if (!account) {
     return null;
   }
@@ -40,7 +39,7 @@ export default function USDCBalance({ client }: USDCBalanceProps) {
         fontSize: "0.875rem",
         color: "var(--color-text-secondary)"
       }}>
-        Loading USDC.e...
+        Loading {meta?.symbol ?? 'USDC'}...
       </div>
     );
   }
@@ -49,8 +48,9 @@ export default function USDCBalance({ client }: USDCBalanceProps) {
     return null;
   }
 
-  // USDC has 6 decimals
-  const formattedBalance = formatUnits(balance as bigint, 6);
+  const decimals = meta?.decimals ?? 6;
+  const symbol = meta?.symbol ?? 'USDC';
+  const formattedBalance = formatUnits(balance as bigint, decimals);
   const displayBalance = parseFloat(formattedBalance).toFixed(2);
 
   return (
@@ -67,7 +67,7 @@ export default function USDCBalance({ client }: USDCBalanceProps) {
       gap: "0.5rem"
     }}>
       <span>💵</span>
-      <span>{displayBalance} USDC.e</span>
+      <span>{displayBalance} {symbol}</span>
     </div>
   );
 }

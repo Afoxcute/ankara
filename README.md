@@ -1,6 +1,6 @@
 # Bumpa
 
-**Bumpa** is a subscription and recurring-payment system on blockchain. Users create subscriptions, pay in native FLOW (or optionally in private/confidential mode on Sepolia), and manage everything from a single app with optional auto-pay and AI suggestions.
+**Bumpa** is a subscription and recurring-payment system on blockchain. Users create subscriptions, pay in native PAS (or optionally in private/confidential mode on Sepolia), and manage everything from a single app with optional auto-pay and AI suggestions.
 
 ---
 
@@ -20,8 +20,8 @@
 
 ## Overview
 
-- **Public subscriptions (Flow EVM Testnet)**  
-  On-chain subscriptions with **native FLOW**. No ERC20 approvals; `pay()` is payable and forwards FLOW to the recipient. Amounts and schedules are public on-chain.
+- **Public subscriptions (Polkadot Hub TestNet)**
+  On-chain subscriptions with **native PAS**. No ERC20 approvals; `pay()` is payable and forwards PAS to the recipient. Amounts and schedules are public on-chain.
 
 - **Confidential subscriptions (Sepolia, optional)**  
   Uses **Zama FHEVM**: subscription amount is stored as an encrypted value (`euint64`). Only the subscriber can decrypt their amount via the relayer SDK. Payments are still in native ETH on Sepolia.
@@ -47,15 +47,15 @@
                 ▼                               ▼
 ┌───────────────────────────────┐   ┌─────────────────────────────────────┐
 │  Backend (backend/)           │   │  On-chain                            │
-│  Express, Prisma, Bull, Redis │   │  • Flow testnet: SubscriptionManager │
-│  POST /api/subscriptions      │   │    FLOW (native FLOW)                │
+│  Express, Prisma, Bull, Redis │   │  • Polkadot Hub TestNet:             │
+│  POST /api/subscriptions      │   │    SubscriptionManager (native PAS)  │
 │  GET  /api/subscriptions/user │   │  • Sepolia: ConfidentialSubscription │
 │  GET  /api/services           │   │    Manager (Zama FHE, optional)       │
 └───────────────────────────────┘   └─────────────────────────────────────┘
 ```
 
 - User creates a subscription in the app → frontend calls the contract (`subscribe`) → then POSTs to backend with `onChainSubscriptionId` and `onChainContractAddress`.
-- Payments: user (or auto-pay job) calls contract `pay()` with native FLOW/ETH → backend records the payment via `POST /api/subscriptions/:id/payments`.
+- Payments: user (or auto-pay job) calls contract `pay()` with native PAS/ETH → backend records the payment via `POST /api/subscriptions/:id/payments`.
 
 ---
 
@@ -75,10 +75,10 @@
 
 ### Flow (public, Flow testnet)
 
-1. User connects wallet (Flow EVM Testnet).
-2. **Create new service**: name, cost (FLOW), frequency, recipient → contract `subscribe(recipient, amountWei, frequency)` → backend `POST /api/subscriptions` with `onChainSubscriptionId` and contract address.
+1. User connects wallet (Polkadot Hub TestNet).
+2. **Create new service**: name, cost (PAS), frequency, recipient → contract `subscribe(recipient, amountWei, frequency)` → backend `POST /api/subscriptions` with `onChainSubscriptionId` and contract address.
 3. **Subscribe to existing service**: pick from “Available services” → same contract + backend flow with `serviceId`.
-4. When due: user (or auto-pay) sends FLOW via contract `pay(subscriptionId)`; backend records payment.
+4. When due: user (or auto-pay) sends PAS via contract `pay(subscriptionId)`; backend records payment.
 
 ### Flow (confidential, Sepolia)
 
@@ -92,11 +92,11 @@
 
 ## Smart contracts
 
-### 1. SubscriptionManagerFLOW (Flow EVM Testnet)
+### 1. SubscriptionManagerFLOW (Polkadot Hub TestNet)
 
 - **Path:** `contracts/contracts/SubscriptionManagerFLOW.sol`
-- **Network:** Flow EVM Testnet (chain ID 545)
-- **Payments:** Native FLOW (18 decimals). No ERC20.
+- **Network:** Polkadot Hub TestNet (chain ID 420420417)
+- **Payments:** Native PAS (18 decimals). No ERC20.
 
 **Main functions:**
 
@@ -177,7 +177,7 @@ Auto-pay uses a Bull queue (Redis). Scheduler checks for due subscriptions and e
 - **Main app:** Header (Bumpa, balance, Connect), tabs: Subscriptions | Analytics.
 - **Subscriptions:**  
   - **Available services** — list from `GET /api/services`; “Subscribe” opens form pre-filled with that service.  
-  - **Create new service** — form (name, cost FLOW/ETH, frequency, recipient, auto-pay, optional “Private subscription” for FHE). On submit: contract `subscribe` then `POST /api/subscriptions` with on-chain id and contract address.  
+  - **Create new service** — form (name, cost PAS/ETH, frequency, recipient, auto-pay, optional “Private subscription” for FHE). On submit: contract `subscribe` then `POST /api/subscriptions` with on-chain id and contract address.  
   - **Your subscriptions** — list from `GET /api/subscriptions/user/:address`; pay, cancel, edit, toggle auto-pay.  
   - **Payment history** per subscription.
 - **Confidential:** If `VITE_CONFIDENTIAL_SUBSCRIPTION_CONTRACT_ADDRESS` is set, “Private subscription” is shown; uses Sepolia and Zama relayer SDK for encrypt/decrypt.
@@ -195,7 +195,7 @@ Auto-pay uses a Bull queue (Redis). Scheduler checks for due subscriptions and e
 | Variable | Description |
 |----------|-------------|
 | `VITE_API_URL` | Backend API base URL (e.g. `http://localhost:5000/api`). |
-| `VITE_SUBSCRIPTION_CONTRACT_ADDRESS` | SubscriptionManagerFLOW on Flow testnet. |
+| `VITE_SUBSCRIPTION_CONTRACT_ADDRESS` | SubscriptionManagerFLOW on Polkadot Hub TestNet. |
 | `VITE_CONFIDENTIAL_SUBSCRIPTION_CONTRACT_ADDRESS` | (Optional) ConfidentialSubscriptionManager on Sepolia. |
 
 ### Backend (`backend/.env`)
@@ -211,7 +211,7 @@ Auto-pay uses a Bull queue (Redis). Scheduler checks for due subscriptions and e
 
 | Variable | Description |
 |----------|-------------|
-| `PRIVATE_KEY` | Deployer wallet private key (with FLOW for Flow, ETH for Sepolia). |
+| `PRIVATE_KEY` | Deployer wallet private key (with PAS for Polkadot Hub, ETH for Sepolia). |
 | `SEPOLIA_RPC_URL` | (Optional) Sepolia RPC for confidential deploy. |
 
 ---
@@ -276,7 +276,7 @@ yarn deploy:confidential
 
 ### Contracts
 
-- **Flow (public):** `cd contracts && yarn deploy:flow` (default network is `flow-testnet`).
+- **Polkadot Hub TestNet (public):** `cd contracts && yarn deploy:flow` (default network is `polkadot-testnet`).
 - **Sepolia (confidential):** `cd contracts && yarn deploy:confidential` (uses `hardhat.sepolia.config.ts` and `contracts-sepolia/`).
 
 ### Backend
@@ -296,7 +296,7 @@ yarn deploy:confidential
 
 | Layer | Role |
 |-------|------|
-| **SubscriptionManagerFLOW** | On-chain subscriptions and native FLOW payments on Flow EVM Testnet. |
+| **SubscriptionManagerFLOW** | On-chain subscriptions and native PAS payments on Polkadot Hub TestNet. |
 | **ConfidentialSubscriptionManager** | Optional private subscriptions (encrypted amount) on Sepolia via Zama FHEVM. |
 | **Backend** | Services catalog, user subscriptions, payment records, auto-pay queue, statistics. |
 | **App** | Wallet connect, create/subscribe to services, pay, cancel, view history, AI suggestions; supports both public (Flow) and confidential (Sepolia) subscriptions. |

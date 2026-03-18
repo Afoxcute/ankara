@@ -5,8 +5,8 @@
   "scripts": {
     "compile": "hardhat compile",
     "test": "hardhat test",
-    "deploy:testnet": "hardhat run scripts/deploy.ts --network flow-testnet",
-    "deploy:flow": "hardhat run scripts/deploy-flow.ts --network flow-testnet",
+    "deploy:testnet": "hardhat run scripts/deploy.ts --network polkadot-testnet",
+    "deploy:flow": "hardhat run scripts/deploy-flow.ts --network polkadot-testnet",
     "deploy:confidential": "hardhat run scripts/deploy-confidential.ts --network sepolia --config hardhat.sepolia.config.ts",
     "deploy:local": "hardhat run scripts/deploy.ts --network localhost",
     "export-abi": "hardhat run scripts/export-abi.ts"

@@ -15,7 +15,7 @@ const subscriptionService = new SubscriptionService();
 
 // x402 Payment Facilitator URL
 const FACILITATOR_URL = process.env.FACILITATOR_URL || '';
-const USDC_TESTNET = process.env.USDC_MINT_TESTNET || '0xc01efAaF7C5C61bEbFAeb358E1161b537b8bC0e0';
+const USDC_TESTNET = process.env.USDC_MINT_TESTNET || '0x0000053900000000000000000000000001200000';
 
 interface PaymentResult {
   success: boolean;
@@ -94,7 +94,7 @@ function initializeWorker() {
           subscriptionId,
           amount,
           paymentResult.transactionHash,
-          'flow-testnet',
+          'polkadot-testnet',
           'completed'
         );
 
@@ -119,7 +119,7 @@ function initializeWorker() {
           subscriptionId,
           amount,
           '',
-          'flow-testnet',
+          'polkadot-testnet',
           'failed',
           `${categorized.category}: ${categorized.message}`
         );
@@ -165,7 +165,7 @@ function initializeWorker() {
           subscriptionId,
           amount,
           '',
-          'flow-testnet',
+          'polkadot-testnet',
           'failed',
           `${categorized.category}: ${categorized.message}`
         );

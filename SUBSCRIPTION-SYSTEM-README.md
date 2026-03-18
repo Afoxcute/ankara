@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Froxy subscription system is a comprehensive crypto-based subscription management platform built on the Cronos blockchain. It enables users to create, manage, and automate payments for recurring services using USDC stablecoin through the x402 payment protocol.
+The Bumpa subscription system is a comprehensive crypto-based subscription management platform built on Polkadot Hub. It enables users to create, manage, and automate payments for recurring services using native stablecoins (USDC, USDt) through the x402 payment protocol.
 
 ## Architecture
 
@@ -62,7 +62,7 @@ model Payment {
   subscriptionId   String
   amount            Decimal   @db.Decimal(18, 6) // Amount paid in USDC
   transactionHash  String   @unique
-  network           String   @default("flow-testnet")
+  network           String   @default("polkadot-testnet")
   status            String   @default("completed") // completed, failed, pending
   errorMessage      String?
   timestamp         DateTime @default(now())
@@ -293,7 +293,7 @@ REDIS_PORT=port
 
 # x402 Configuration
 FACILITATOR_URL=<your-payment-facilitator-url>   # Optional; for x402 settlement on Flow
-USDC_MINT_TESTNET=0xc01efAaF7C5C61bEbFAeb358E1161b537b8bC0e0
+USDC_MINT_TESTNET=0x0000053900000000000000000000000001200000
 ```
 
 #### Frontend

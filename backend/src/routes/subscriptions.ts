@@ -123,7 +123,7 @@ router.post('/:id/payments', async (req, res) => {
       id,
       amount,
       transactionHash,
-      network || 'flow-testnet',
+      network || 'polkadot-testnet',
       status || 'completed',
       errorMessage
     );
