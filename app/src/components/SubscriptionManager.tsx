@@ -612,7 +612,7 @@ export default function SubscriptionManager({
             }
           }}
           onCancel={() => { setShowCreateForm(false); setSubscribeToService(null); }}
-          loading={loading || contractPending || confidentialPending}
+          loading={loading || contractPending || erc20Pending || confidentialPending}
         />
       )}
 

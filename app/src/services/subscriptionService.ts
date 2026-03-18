@@ -9,7 +9,6 @@ import {
   PAS_TESTNET,
 } from "./x402PaymentService";
 import { subscriptionApi, Subscription as ApiSubscription } from "./subscriptionApi";
-import { SUBSCRIPTION_CONTRACT_ADDRESS } from "../contracts/config";
 
 export interface Subscription {
   id: string;
@@ -138,8 +137,10 @@ export class SubscriptionAgent {
     }
 
     try {
-      const contractAddress = SUBSCRIPTION_CONTRACT_ADDRESS || undefined;
-      const apiSubscriptions = await subscriptionApi.getUserSubscriptions(this.userAddress, contractAddress);
+      // Don't filter by a single contract address, because we can now have:
+      // - PAS on SubscriptionManagerFLOW
+      // - USDC/USDT on ERC20 SubscriptionManager instances
+      const apiSubscriptions = await subscriptionApi.getUserSubscriptions(this.userAddress);
       this.subscriptions.clear();
       apiSubscriptions.forEach(apiSub => {
         const localSub = apiToLocalSubscription(apiSub);
