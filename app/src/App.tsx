@@ -59,7 +59,7 @@ export default function App({ thirdwebClient }: AppProps) {
         <div className="header-container">
           <div className="header-logo">
             <button type="button" className="header-logo-link" onClick={() => setShowLanding(true)}>
-              🤖 Bumpa
+              🤖 Ankara
             </button>
           </div>
           <div className="header-actions">

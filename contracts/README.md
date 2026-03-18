@@ -1,6 +1,6 @@
-# Bumpa Subscription Smart Contracts
+# Ankara Subscription Smart Contracts
 
-Hardhat project for the on-chain subscription system used by the Bumpa frontend.
+Hardhat project for the on-chain subscription system used by the Ankara frontend.
 
 ## Contracts
 

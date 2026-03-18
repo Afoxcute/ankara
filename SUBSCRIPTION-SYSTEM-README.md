@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Bumpa subscription system is a comprehensive crypto-based subscription management platform built on Polkadot Hub. It enables users to create, manage, and automate payments for recurring services using native stablecoins (USDC, USDt) through the x402 payment protocol.
+The Ankara subscription system is a comprehensive crypto-based subscription management platform built on Polkadot Hub. It enables users to create, manage, and automate payments for recurring services using native stablecoins (USDC, USDt) through the x402 payment protocol.
 
 ## Architecture
 

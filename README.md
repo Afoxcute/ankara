@@ -1,6 +1,6 @@
-# Bumpa
+# Ankara
 
-**Bumpa** is a subscription and recurring-payment system on blockchain. Users create subscriptions, pay in native PAS (or optionally in private/confidential mode on Sepolia), and manage everything from a single app with optional auto-pay and AI suggestions.
+**Ankara** is a subscription and recurring-payment system on blockchain. Users create subscriptions, pay in native PAS (or optionally in private/confidential mode on Sepolia), and manage everything from a single app with optional auto-pay and AI suggestions.
 
 ---
 
@@ -173,8 +173,8 @@ Auto-pay uses a Bull queue (Redis). Scheduler checks for due subscriptions and e
 
 **Main flows:**
 
-- **Landing:** “Bumpa” branding, “Open app” → main app.
-- **Main app:** Header (Bumpa, balance, Connect), tabs: Subscriptions | Analytics.
+- **Landing:** “Ankara” branding, “Open app” → main app.
+- **Main app:** Header (Ankara, balance, Connect), tabs: Subscriptions | Analytics.
 - **Subscriptions:**  
   - **Available services** — list from `GET /api/services`; “Subscribe” opens form pre-filled with that service.  
   - **Create new service** — form (name, cost PAS/ETH, frequency, recipient, auto-pay, optional “Private subscription” for FHE). On submit: contract `subscribe` then `POST /api/subscriptions` with on-chain id and contract address.  
