@@ -1,8 +1,8 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
-# dependencies
-/node_modules
-/.pnp
+# Dependencies
+node_modules/
+.pnp
 .pnp.*
 .yarn/*
 !.yarn/patches
@@ -10,35 +10,70 @@
 !.yarn/releases
 !.yarn/versions
 
-# testing
-/coverage
+# Environment and secrets (never commit)
+.env
+.env.local
+.env.*.local
+.env.development
+.env.test
+.env.production
+*.env
+!.env.example
 
-# next.js
-/.next/
-/out/
-
-# production
-/build
-
-# misc
-.DS_Store
+# Private keys and credentials
 *.pem
+*.key
+*.p12
+*.pfx
+secrets/
+*.secret
 
-# debug
+# Testing
+coverage/
+.nyc_output/
+
+# Next.js / app
+.next/
+out/
+build/
+dist/
+dist-ssr/
+*.local
+
+# Backend
+backend/src/dist/
+backend/src/generated/
+
+# Contracts (Hardhat)
+contracts/cache/
+contracts/artifacts/
+contracts/typechain-types/
+contracts/coverage/
+contracts/coverage.json
+
+# Debug and logs
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
+logs/
+*.log
 
-# env files (can opt-in for committing if needed)
-.env
-.env.local
+# OS and editors
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
 
-# vercel
+# Vercel / deploy
 .vercel
 
-# typescript
+# TypeScript
 *.tsbuildinfo
 next-env.d.ts
-*.env
-.env.*
