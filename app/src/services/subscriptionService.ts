@@ -47,7 +47,11 @@ function apiToLocalSubscription(apiSub: ApiSubscription): Subscription {
   const stablecoin = apiSub.usageData?.stablecoin;
   const paymentToken: Subscription['paymentToken'] =
     apiSub.onChainSubscriptionId
-      ? 'PAS'
+      ? stablecoin === 'USDt'
+        ? 'USDt'
+        : stablecoin === 'USDC'
+          ? 'USDC'
+          : 'PAS'
       : stablecoin === 'USDt'
         ? 'USDt'
         : stablecoin === 'PAS'
