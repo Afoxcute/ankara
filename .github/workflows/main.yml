@@ -1,0 +1,113 @@
+name: Deploy bump Backend4
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+env:
+  DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME_PROD }}
+  DOCKER_PASSWORD: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN_PROD }}
+  HOST: ${{ secrets.SSH_HOST_TEMP }}
+  HOST_USERNAME: ${{ secrets.SSH_USERNAME_TEMP }}
+  SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_TEMP }}
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ env.DOCKER_USERNAME }}
+          password: ${{ env.DOCKER_PASSWORD }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          file: Dockerfile
+          push: true
+          tags: |
+            ${{ env.DOCKER_USERNAME }}/bump:latest
+          cache-from: type=registry,ref=${{ env.DOCKER_USERNAME }}/bump:buildcache
+          cache-to: type=registry,ref=${{ env.DOCKER_USERNAME }}/bump:buildcache,mode=max
+
+      - name: Deploy to Ubuntu server
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ env.HOST }}
+          username: ${{ env.HOST_USERNAME }}
+          key: ${{ env.SSH_PRIVATE_KEY }}
+          script: |
+            echo "Deployment started at $(date '+%Y-%m-%d %H:%M:%S UTC')"
+            
+            # Ensure backend .env exists on server
+            if [ ! -f /home/ubuntu/bump/.env ]; then
+              echo "❌ Backend .env file not found on server!"
+              echo "Expected: /home/ubuntu/bump/.env"
+              exit 1
+            fi
+            # Stop and remove existing container
+            echo "Stopping existing container..."
+            sudo docker stop bump || true
+            sudo docker rm bump || true
+            
+            # Pull latest image
+            echo "Pulling latest image..."
+            sudo docker pull ${{ env.DOCKER_USERNAME }}/bump:latest
+            
+            # Run new container with backend .env mounted
+            echo "Starting new container..."
+            sudo docker run -d \
+              --name bump \
+              --restart unless-stopped \
+              -p 8081:5000 \
+              -v /home/ubuntu/bump/.env:/usr/src/app/.env:ro \
+              ${{ env.DOCKER_USERNAME }}/bump:latest
+            
+            # Verify deployment
+            echo "Verifying deployment..."
+            sleep 10
+            
+            if sudo docker ps | grep -q bump; then
+              echo "✅ Container is running successfully"
+              echo "Container ID: $(sudo docker ps -q -f name=bump)"
+              echo "Container logs:"
+              sudo docker logs --tail 20 bump
+            else
+              echo "❌ Container failed to start"
+              echo "Error logs:"
+              sudo docker logs bump
+              exit 1
+            fi
+            
+            echo "Deployment completed at $(date '+%Y-%m-%d %H:%M:%S UTC')"
+      - name: Verify Deployment
+        uses: appleboy/ssh-action@master
+        if: success()
+        with:
+          host: ${{ env.HOST }}
+          username: ${{ env.HOST_USERNAME }}
+          key: ${{ env.SSH_PRIVATE_KEY }}
+          script: |
+            if sudo docker ps | grep -q bump; then
+              echo "Container Status: Running"
+              echo "Container Details:"
+              sudo docker inspect bump --format='Status: {{.State.Status}} | Started At: {{.State.StartedAt}}'
+              echo "Port Mapping:"
+              sudo docker port bump
+              
+              echo "Checking .env mount:"
+              sudo docker exec bump ls -la /usr/src/app/.env || echo "❌ .env not found in container!"
+            else
+              echo "❌ Container is not running"
+              exit 1
+            fi

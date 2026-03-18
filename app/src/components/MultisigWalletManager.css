@@ -1,0 +1,169 @@
+.multisig-wallet-manager {
+  width: 100%;
+}
+
+.create-wallet-form {
+  margin-bottom: 2rem;
+  padding: 1.5rem;
+}
+
+.member-input-row {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+  align-items: center;
+}
+
+.member-input-row .form-input {
+  flex: 1;
+}
+
+.btn-small {
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+}
+
+.form-hint {
+  font-size: 0.875rem;
+  color: var(--color-text-secondary);
+  margin-top: 0.5rem;
+}
+
+.wallets-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 1.5rem;
+}
+
+.wallet-card {
+  padding: 1.5rem;
+  transition: transform var(--transition-normal), box-shadow var(--transition-normal);
+}
+
+.wallet-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+}
+
+.wallet-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.wallet-header h3 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.wallet-badge {
+  background: var(--color-primary);
+  color: white;
+  padding: 0.25rem 0.75rem;
+  border-radius: var(--radius-full);
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.wallet-description {
+  color: var(--color-text-secondary);
+  font-size: 0.9rem;
+  margin-bottom: 1rem;
+}
+
+.wallet-address {
+  margin-bottom: 1rem;
+  padding: 0.75rem;
+  background: var(--color-bg-secondary);
+  border-radius: var(--radius-md);
+}
+
+.address-label {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--color-text-tertiary);
+  margin-bottom: 0.25rem;
+}
+
+.address-value {
+  display: block;
+  font-family: monospace;
+  font-size: 0.875rem;
+  word-break: break-all;
+}
+
+.wallet-members {
+  margin-bottom: 1rem;
+}
+
+.members-label {
+  display: block;
+  font-size: 0.875rem;
+  color: var(--color-text-secondary);
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+}
+
+.members-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.member-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem;
+  background: var(--color-bg-secondary);
+  border-radius: var(--radius-sm);
+}
+
+.member-address {
+  font-family: monospace;
+  font-size: 0.875rem;
+}
+
+.member-badge {
+  background: var(--color-success);
+  color: white;
+  padding: 0.125rem 0.5rem;
+  border-radius: var(--radius-full);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.wallet-footer {
+  padding-top: 1rem;
+  border-top: 1px solid var(--color-border);
+}
+
+.wallet-created {
+  font-size: 0.75rem;
+  color: var(--color-text-tertiary);
+}
+
+.empty-state {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 3rem;
+}
+
+.empty-icon {
+  font-size: 4rem;
+  margin-bottom: 1rem;
+}
+
+.empty-state h3 {
+  margin-bottom: 0.5rem;
+  color: var(--color-text-secondary);
+}
+
+.empty-state p {
+  color: var(--color-text-tertiary);
+}
+
+
+

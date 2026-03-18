@@ -1,0 +1,1 @@
+{"version":3,"file":"infringementController.d.ts","sourceRoot":"","sources":["../../controllers/infringementController.ts"],"names":[],"mappings":"AAAA,OAAO,EAAE,OAAO,EAAE,QAAQ,EAAE,MAAM,SAAS,CAAC;AAI5C,QAAA,MAAM,wBAAwB,GAAU,KAAK,OAAO,EAAE,KAAK,QAAQ,gDA6BlE,CAAC;AAEF,QAAA,MAAM,kCAAkC,GAAU,KAAK,OAAO,EAAE,KAAK,QAAQ,gDAgC5E,CAAC;AAEF,OAAO,EAAE,wBAAwB,EAAE,kCAAkC,EAAE,CAAC"}

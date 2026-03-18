@@ -1,0 +1,610 @@
+.revenue-analytics {
+  padding: 2rem;
+  max-width: 1400px;
+  margin: 0 auto;
+  color: #ffffff !important;
+}
+
+.analytics-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.analytics-header h1 {
+  margin: 0;
+  font-size: 2rem;
+  color: #ffffff !important;
+}
+
+.date-filters {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.date-filters label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.9rem;
+  color: #e2e8f0 !important;
+}
+
+.date-filters input[type="date"] {
+  padding: 0.5rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 0.9rem;
+}
+
+.date-filters button {
+  padding: 0.5rem 1rem;
+  background: #007bff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: background 0.2s;
+}
+
+.date-filters button:hover:not(:disabled) {
+  background: #0056b3;
+}
+
+.date-filters button:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+.analytics-tabs {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 2rem;
+  border-bottom: 2px solid #eee;
+  flex-wrap: wrap;
+}
+
+.analytics-tabs button {
+  padding: 0.75rem 1.5rem;
+  background: none;
+  border: none;
+  border-bottom: 3px solid transparent;
+  cursor: pointer;
+  font-size: 1rem;
+  color: #cbd5e1 !important;
+  transition: all 0.2s;
+}
+
+.analytics-tabs button:hover {
+  color: #60a5fa !important;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.analytics-tabs button.active {
+  color: #60a5fa !important;
+  border-bottom-color: #60a5fa;
+  font-weight: 600;
+}
+
+.analytics-content {
+  min-height: 400px;
+}
+
+.error-message {
+  padding: 1rem;
+  background: #fee;
+  color: #c33;
+  border-radius: 4px;
+  margin-bottom: 1rem;
+}
+
+.loading {
+  text-align: center;
+  padding: 3rem;
+  color: #cbd5e1 !important;
+  font-size: 1.1rem;
+}
+
+/* Summary Grid */
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.stat-card {
+  background: rgba(15, 23, 42, 0.8) !important;
+  padding: 1.5rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(148, 163, 184, 0.3) !important;
+  color: #ffffff !important;
+}
+
+.stat-card h3 {
+  margin: 0 0 0.5rem 0;
+  font-size: 0.9rem;
+  color: #cbd5e1 !important;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.stat-card .stat-value {
+  margin: 0;
+  font-size: 2rem;
+  font-weight: 700;
+  color: #ffffff !important;
+}
+
+/* Revenue Table */
+.revenue-table {
+  background: rgba(15, 23, 42, 0.8) !important;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(148, 163, 184, 0.3) !important;
+}
+
+.revenue-table table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.revenue-table th {
+  background: rgba(30, 41, 59, 0.8) !important;
+  padding: 1rem;
+  text-align: left;
+  font-weight: 600;
+  color: #ffffff !important;
+  border-bottom: 2px solid rgba(148, 163, 184, 0.3) !important;
+}
+
+.revenue-table td {
+  padding: 1rem;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.2) !important;
+  color: #e2e8f0 !important;
+}
+
+.revenue-table td.amount {
+  font-weight: 600;
+  color: #4ade80 !important;
+}
+
+.revenue-table tr:hover {
+  background: rgba(30, 41, 59, 0.5) !important;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 3rem;
+  color: #94a3b8 !important;
+  font-style: italic;
+}
+
+/* Success Rates */
+.success-rates {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.rates-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.5rem;
+}
+
+.rate-card {
+  background: rgba(15, 23, 42, 0.8) !important;
+  padding: 2rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  text-align: center;
+  border: 1px solid rgba(148, 163, 184, 0.3) !important;
+  color: #ffffff !important;
+}
+
+.rate-card.success {
+  border-top: 4px solid #28a745;
+}
+
+.rate-card.failure {
+  border-top: 4px solid #dc3545;
+}
+
+.rate-card h3 {
+  margin: 0 0 1rem 0;
+  color: #cbd5e1 !important;
+  font-size: 1rem;
+}
+
+.rate-card .rate-value {
+  font-size: 3rem;
+  font-weight: 700;
+  margin: 0.5rem 0;
+}
+
+.rate-card.success .rate-value {
+  color: #4ade80 !important;
+}
+
+.rate-card.failure .rate-value {
+  color: #f87171 !important;
+}
+
+.rate-card .rate-count {
+  color: #94a3b8 !important;
+  font-size: 0.9rem;
+}
+
+.breakdown-list {
+  background: rgba(15, 23, 42, 0.8) !important;
+  padding: 1.5rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(148, 163, 184, 0.3) !important;
+  color: #ffffff !important;
+}
+
+.breakdown-list h3 {
+  margin: 0 0 1rem 0;
+  color: #ffffff !important;
+}
+
+.breakdown-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.75rem;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.2) !important;
+}
+
+.breakdown-item:last-child {
+  border-bottom: none;
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: capitalize;
+  /* Ensure visibility on dark backgrounds */
+  border: 1px solid currentColor;
+}
+
+.status-badge.completed {
+  background: rgba(74, 222, 128, 0.2) !important;
+  color: #4ade80 !important;
+  border-color: #4ade80 !important;
+}
+
+.status-badge.failed {
+  background: rgba(248, 113, 113, 0.2) !important;
+  color: #f87171 !important;
+  border-color: #f87171 !important;
+}
+
+.status-badge.pending {
+  background: rgba(251, 191, 36, 0.2) !important;
+  color: #fbbf24 !important;
+  border-color: #fbbf24 !important;
+}
+
+.breakdown-item .count {
+  flex: 1;
+  color: #cbd5e1 !important;
+}
+
+.breakdown-item .percentage {
+  font-weight: 600;
+  color: #ffffff !important;
+}
+
+/* Service Breakdown */
+.breakdown-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 1.5rem;
+}
+
+.breakdown-card {
+  background: rgba(15, 23, 42, 0.8) !important;
+  padding: 1.5rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(148, 163, 184, 0.3) !important;
+  color: #ffffff !important;
+}
+
+.breakdown-card h3 {
+  margin: 0 0 1rem 0;
+  color: #ffffff !important;
+  font-size: 1.2rem;
+  border-bottom: 2px solid rgba(148, 163, 184, 0.3) !important;
+  padding-bottom: 0.5rem;
+}
+
+.breakdown-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.breakdown-stat {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0;
+}
+
+.breakdown-stat .label {
+  color: #cbd5e1 !important;
+  font-size: 0.9rem;
+}
+
+.breakdown-stat .value {
+  font-weight: 600;
+  color: #ffffff !important;
+}
+
+.freq-badge {
+  display: inline-block;
+  margin-left: 0.5rem;
+  padding: 0.25rem 0.5rem;
+  background: #e9ecef;
+  border-radius: 4px;
+  font-size: 0.85rem;
+}
+
+/* Receipts */
+.receipts-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.receipts-summary {
+  background: rgba(15, 23, 42, 0.8) !important;
+  padding: 1.5rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(148, 163, 184, 0.3) !important;
+  color: #ffffff !important;
+}
+
+.receipts-summary h3 {
+  margin: 0 0 1rem 0;
+  color: #ffffff !important;
+}
+
+.summary-stats {
+  display: flex;
+  gap: 2rem;
+  flex-wrap: wrap;
+}
+
+.summary-stats span {
+  color: #cbd5e1 !important;
+  font-size: 0.9rem;
+}
+
+.receipts-table {
+  background: rgba(15, 23, 42, 0.8) !important;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(148, 163, 184, 0.3) !important;
+}
+
+.receipts-table table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.receipts-table th {
+  background: rgba(30, 41, 59, 0.8) !important;
+  padding: 1rem;
+  text-align: left;
+  font-weight: 600;
+  color: #ffffff !important;
+  border-bottom: 2px solid rgba(148, 163, 184, 0.3) !important;
+  font-size: 0.9rem;
+}
+
+.receipts-table td {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.2) !important;
+  font-size: 0.9rem;
+  color: #e2e8f0 !important;
+}
+
+.receipts-table td.address {
+  font-family: monospace;
+  color: #cbd5e1 !important;
+}
+
+.receipts-table td.amount {
+  font-weight: 600;
+  color: #4ade80 !important;
+}
+
+.receipts-table tr:hover {
+  background: rgba(30, 41, 59, 0.5) !important;
+}
+
+.tx-link {
+  color: #60a5fa !important;
+  text-decoration: none;
+  font-family: monospace;
+}
+
+.tx-link:hover {
+  text-decoration: underline;
+}
+
+@media (max-width: 768px) {
+  .revenue-analytics {
+    padding: 1rem;
+  }
+
+  .analytics-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .analytics-tabs {
+    overflow-x: auto;
+  }
+
+  .summary-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .rates-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .breakdown-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .receipts-table {
+    overflow-x: auto;
+  }
+
+  .receipts-table table {
+    min-width: 600px;
+  }
+}
+
+/* Failed Payments Section */
+.failed-payments-section {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.failed-payments-summary {
+  background: rgba(15, 23, 42, 0.8) !important;
+  padding: 1.5rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(148, 163, 184, 0.3) !important;
+  color: #ffffff !important;
+}
+
+.failed-payments-summary h3 {
+  margin: 0 0 1rem 0;
+  color: #ffffff !important;
+}
+
+.failed-payments-summary .summary-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.failure-categories {
+  background: rgba(15, 23, 42, 0.8) !important;
+  padding: 1.5rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(148, 163, 184, 0.3) !important;
+  color: #ffffff !important;
+}
+
+.failure-categories h3 {
+  margin: 0 0 1rem 0;
+  color: #ffffff !important;
+}
+
+.category-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.category-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem;
+  background: rgba(30, 41, 59, 0.5) !important;
+  border-radius: 4px;
+  border: 1px solid rgba(148, 163, 184, 0.2) !important;
+}
+
+.category-name {
+  color: #cbd5e1 !important;
+  text-transform: capitalize;
+}
+
+.category-count {
+  color: #f87171 !important;
+  font-weight: 600;
+}
+
+.recent-failures {
+  background: rgba(15, 23, 42, 0.8) !important;
+  padding: 1.5rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(148, 163, 184, 0.3) !important;
+  color: #ffffff !important;
+}
+
+.recent-failures h3 {
+  margin: 0 0 1rem 0;
+  color: #ffffff !important;
+}
+
+.category-badge {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: capitalize;
+  background: rgba(248, 113, 113, 0.2) !important;
+  color: #f87171 !important;
+  border: 1px solid #f87171 !important;
+}
+
+.retryable-badge {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.retryable-badge.yes {
+  background: rgba(74, 222, 128, 0.2) !important;
+  color: #4ade80 !important;
+  border: 1px solid #4ade80 !important;
+}
+
+.retryable-badge.no {
+  background: rgba(248, 113, 113, 0.2) !important;
+  color: #f87171 !important;
+  border: 1px solid #f87171 !important;
+}
+
+.error-message {
+  color: #fbbf24 !important;
+  font-size: 0.9rem;
+  max-width: 300px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+

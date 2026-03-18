@@ -1,0 +1,43 @@
+{
+  "dependencies": {
+    "@openzeppelin/contracts": "^5.4.0",
+    "@prisma/client": "^5.22.0",
+    "@tanstack/react-query": "^5.80.6",
+    "@tomo-inc/tomo-evm-kit": "^0.0.45",
+    "@types/pg": "^8.16.0",
+    "axios": "^1.9.0",
+    "body-parser": "^1.20.2",
+    "bull": "^4.12.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.5.0",
+    "express": "^4.18.2",
+    "form-data": "^4.0.2",
+    "pg": "^8.16.3",
+    "prisma": "^5.22.0",
+    "viem": "^2.37.5",
+    "wagmi": "^2.15.6"
+  },
+  "devDependencies": {
+    "@tailwindcss/cli": "^4.1.8",
+    "@types/bull": "^4.10.0",
+    "@types/cors": "^2.8.17",
+    "@types/express": "^4.17.21",
+    "@types/form-data": "^2.2.1",
+    "@types/node": "^25.0.1",
+    "autoprefixer": "^10.4.21",
+    "postcss": "^8.5.4",
+    "tailwindcss": "^4.1.8",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.8.3"
+  },
+  "scripts": {
+    "start": "npx ts-node src/index.ts",
+    "dev": "ts-node src/index.ts",
+    "build": "tsc",
+    "clear-db": "ts-node src/scripts/clear-database.ts",
+    "test:yakoa": "ts-node src/scripts/test-yakoa.ts",
+    "test:yakoa:unique": "ts-node src/yakoa/test-unique.ts",
+    "yakoa:register": "ts-node src/yakoa/index.ts"
+  },
+  "packageManager": "yarn@1.22.22+sha512.a6b2f7906b721bba3d67d4aff083df04dad64c399707841b7acf00f6b133b7ac24255f2652fa22ae3534329dc6180534e98d17432037ff6fd140556e2bb3137e"
+}
