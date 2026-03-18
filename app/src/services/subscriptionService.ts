@@ -6,6 +6,7 @@ import {
   PaymentRequirements,
   USDC_TESTNET,
   USDT_TESTNET,
+  PAS_TESTNET,
 } from "./x402PaymentService";
 import { subscriptionApi, Subscription as ApiSubscription } from "./subscriptionApi";
 import { SUBSCRIPTION_CONTRACT_ADDRESS } from "../contracts/config";
@@ -20,13 +21,13 @@ export interface Subscription {
   nextPaymentDate: Date;
   isActive: boolean;
   autoPay: boolean;
-  paymentToken: 'PAS' | 'USDC' | 'USDt';
+  paymentToken: 'PAS' | 'PAS_X402' | 'USDC' | 'USDt';
   onChainSubscriptionId?: string | null; // SubscriptionManager contract id when created on-chain
   usageData?: {
     lastUsed?: Date;
     usageCount?: number;
     avgUsagePerMonth?: number;
-    stablecoin?: 'USDC' | 'USDt';
+    stablecoin?: 'USDC' | 'USDt' | 'PAS';
   };
 }
 
@@ -44,8 +45,14 @@ function apiToLocalSubscription(apiSub: ApiSubscription): Subscription {
   }
 
   const stablecoin = apiSub.usageData?.stablecoin;
-  const paymentToken: 'PAS' | 'USDC' | 'USDt' =
-    apiSub.onChainSubscriptionId ? 'PAS' : stablecoin === 'USDt' ? 'USDt' : 'USDC';
+  const paymentToken: Subscription['paymentToken'] =
+    apiSub.onChainSubscriptionId
+      ? 'PAS'
+      : stablecoin === 'USDt'
+        ? 'USDt'
+        : stablecoin === 'PAS'
+          ? 'PAS_X402'
+          : 'USDC';
 
   return {
     id: apiSub.id,
@@ -247,10 +254,21 @@ export class SubscriptionAgent {
         return { success: false, error: 'Wallet not connected' };
       }
 
-      // Off-chain stablecoin auto-pay uses Polkadot Hub's native stablecoin precompile (6 decimals).
-      const stablecoin = subscription.paymentToken === 'USDt' ? 'USDt' : 'USDC';
-      const assetAddress = stablecoin === 'USDt' ? USDT_TESTNET : USDC_TESTNET;
-      const amountInBaseUnits = parseUnits(subscription.cost.toString(), 6).toString();
+      // Off-chain ERC20 payments via Polkadot Hub precompiles.
+      // Stablecoins USDC/USDt have 6 decimals; PAS (x402) uses 18 decimals.
+      const amountDecimals =
+        subscription.paymentToken === 'USDt' || subscription.paymentToken === 'USDC'
+          ? 6
+          : 18;
+
+      const assetAddress =
+        subscription.paymentToken === 'USDt'
+          ? USDT_TESTNET
+          : subscription.paymentToken === 'PAS_X402'
+            ? PAS_TESTNET
+            : USDC_TESTNET;
+
+      const amountInBaseUnits = parseUnits(subscription.cost.toString(), amountDecimals).toString();
 
       // Create payment requirements for x402
       const paymentRequirements: PaymentRequirements = {

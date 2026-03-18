@@ -29,7 +29,7 @@ export interface Subscription {
      * When a subscription is paid via x402 (off-chain),
      * indicates which Polkadot Hub stablecoin to use.
      */
-    stablecoin?: 'USDC' | 'USDt';
+    stablecoin?: 'USDC' | 'USDt' | 'PAS';
   };
   service?: {
     id: string;
@@ -80,7 +80,7 @@ export interface CreateSubscriptionInput {
     lastUsed?: Date;
     usageCount?: number;
     avgUsagePerMonth?: number;
-    stablecoin?: 'USDC' | 'USDt';
+    stablecoin?: 'USDC' | 'USDt' | 'PAS';
   };
 }
 
@@ -95,7 +95,7 @@ export interface UpdateSubscriptionInput {
     lastUsed?: Date;
     usageCount?: number;
     avgUsagePerMonth?: number;
-    stablecoin?: 'USDC' | 'USDt';
+    stablecoin?: 'USDC' | 'USDt' | 'PAS';
   };
 }
 

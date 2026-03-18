@@ -33,10 +33,29 @@ export const USDT_TESTNET = '0x000007C000000000000000000000000001200000'; // Ass
 export const USDC_MAINNET = '0x0000053900000000000000000000000001200000';
 export const USDT_MAINNET = '0x000007C000000000000000000000000001200000';
 
+// PAS (Paseo) ERC20 precompile address for x402 payments.
+// If PAS is not exposed via the ERC20 precompile in your environment, this will fail;
+// override via `VITE_PAS_X402_ASSET_ADDRESS`.
+export const PAS_TESTNET =
+  (typeof import.meta !== 'undefined' &&
+    import.meta.env?.VITE_PAS_X402_ASSET_ADDRESS &&
+    String(import.meta.env.VITE_PAS_X402_ASSET_ADDRESS)) ||
+  '0x0000000000000000000000000000000001200000';
+
+export const PAS_MAINNET = PAS_TESTNET;
+
+export const PAS_DECIMALS =
+  Number(import.meta.env?.VITE_PAS_X402_DECIMALS || 18) || 18;
+
 // Off-chain metadata for precompile tokens (the precompile does not expose name/symbol/decimals)
 export const STABLECOIN_METADATA: Record<string, { name: string; symbol: string; decimals: number }> = {
   [USDC_TESTNET.toLowerCase()]: { name: 'USD Coin', symbol: 'USDC', decimals: 6 },
   [USDT_TESTNET.toLowerCase()]: { name: 'Tether USD', symbol: 'USDt', decimals: 6 },
+  [PAS_TESTNET.toLowerCase()]: {
+    name: String(import.meta.env?.VITE_PAS_X402_DOMAIN_NAME || 'PAS'),
+    symbol: 'PAS',
+    decimals: PAS_DECIMALS,
+  },
 };
 
 // Facilitator URL (set VITE_FACILITATOR_URL in .env for payment settlement)
@@ -727,12 +746,16 @@ export class X402PaymentService {
     if (!verifyResult.isValid && verifyResult.invalidReason?.includes('signature')) {
       console.log('🔄 Verification failed, trying alternative domain names...');
       // Try common domain name variations for USDC contracts
+      const pasDomainEnv = String(import.meta.env?.VITE_PAS_X402_DOMAIN_NAME || 'PAS');
       const alternativeDomains = [
         "USD Coin",
         "USDX Coin", 
         "USD Coin (Cronos)",
         "USDC",
-        "Tether USD"
+        "Tether USD",
+        pasDomainEnv,
+        "PAS",
+        "Paseo"
       ];
       
       for (const altDomain of alternativeDomains) {

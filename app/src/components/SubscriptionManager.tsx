@@ -198,7 +198,7 @@ export default function SubscriptionManager({
     frequency: 'monthly' | 'weekly' | 'yearly';
     recipientAddress: string;
     autoPay: boolean;
-    paymentToken: 'PAS' | 'USDC' | 'USDt';
+    paymentToken: 'PAS' | 'PAS_X402' | 'USDC' | 'USDt';
     isPrivate?: boolean;
   }) => {
     if (!editingSubscription) return;
@@ -215,13 +215,21 @@ export default function SubscriptionManager({
       };
 
       if (!editingSubscription.onChainSubscriptionId) {
+        // Switching between off-chain stablecoins (x402) is supported.
+        // Switching from off-chain to on-chain (PAS) is not supported by this simple UI.
         if (serviceData.paymentToken === 'PAS') {
-          onError?.('Switching payment asset from stablecoin to PAS requires creating a new subscription.');
+          onError?.('Switching payment asset from x402 (stablecoin/PAS) to on-chain PAS requires creating a new subscription.');
           return;
         }
         updates.usageData = {
-          stablecoin: serviceData.paymentToken,
+          stablecoin: serviceData.paymentToken === 'PAS_X402' ? 'PAS' : serviceData.paymentToken,
         };
+      } else {
+        // On-chain subscriptions are always paid in native PAS.
+        if (serviceData.paymentToken !== 'PAS') {
+          onError?.('On-chain PAS subscriptions cannot be switched to off-chain x402 payments.');
+          return;
+        }
       }
 
       const success = await subscriptionAgent.updateSubscription(editingSubscription.id, updates);
@@ -248,9 +256,13 @@ export default function SubscriptionManager({
       return;
     }
 
+    const assetLabel =
+      subscription.paymentToken === 'PAS' || subscription.paymentToken === 'PAS_X402'
+        ? 'PAS'
+        : subscription.paymentToken;
+
     try {
       setLoading(true);
-      const assetLabel = subscription.paymentToken === 'PAS' ? 'PAS' : subscription.paymentToken;
       onSuccess?.(
         `Processing payment of ${subscription.cost.toFixed(4)} ${assetLabel} to ${subscription.service}...`
       );
@@ -293,8 +305,8 @@ export default function SubscriptionManager({
         message.includes('not found on ABI');
       onError?.(
         isAbiDecodeError
-          ? `Payment failed. Ensure you have enough ${subscription.paymentToken}, the subscription is due, and you are the subscriber.`
-          : `Payment failed: ${message}. Ensure sufficient ${subscription.paymentToken} balance.`
+          ? `Payment failed. Ensure you have enough ${assetLabel}, the subscription is due, and you are the subscriber.`
+          : `Payment failed: ${message}. Ensure sufficient ${assetLabel} balance.`
       );
     } finally {
       setLoading(false);
@@ -305,6 +317,8 @@ export default function SubscriptionManager({
     .filter(sub => sub.isActive)
     .reduce(
       (acc, sub) => {
+        const assetGroup = sub.paymentToken === 'PAS_X402' ? 'PAS' : sub.paymentToken;
+
         const monthlyEquivalent =
           sub.frequency === 'monthly'
             ? sub.cost
@@ -314,10 +328,10 @@ export default function SubscriptionManager({
                 ? sub.cost / 12
                 : sub.cost;
 
-        acc[sub.paymentToken] += monthlyEquivalent;
+        acc[assetGroup] += monthlyEquivalent;
         return acc;
       },
-      { PAS: 0, USDC: 0, USDt: 0 } as Record<Subscription['paymentToken'], number>
+      { PAS: 0, USDC: 0, USDt: 0 } as Record<'PAS' | 'USDC' | 'USDt', number>
     );
 
   const activeSubscriptions = subscriptions.filter(sub => sub.isActive);
@@ -466,7 +480,7 @@ export default function SubscriptionManager({
                   userAddress: account.address,
                   autoPay: serviceData.autoPay,
                   usageData: {
-                    stablecoin: serviceData.paymentToken,
+                    stablecoin: serviceData.paymentToken === 'PAS_X402' ? 'PAS' : serviceData.paymentToken,
                   },
                 });
                 onSuccess?.(`Subscription created for ${serviceData.paymentToken} (off-chain x402).`);

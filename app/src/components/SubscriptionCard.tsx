@@ -19,7 +19,10 @@ export default function SubscriptionCard({
   loading,
 }: SubscriptionCardProps) {
   const isDue = new Date() >= subscription.nextPaymentDate;
-  const assetLabel = subscription.paymentToken === 'PAS' ? 'PAS' : subscription.paymentToken;
+  const assetLabel =
+    subscription.paymentToken === 'PAS' || subscription.paymentToken === 'PAS_X402'
+      ? 'PAS'
+      : subscription.paymentToken;
   const daysUntilDue = Math.ceil(
     (subscription.nextPaymentDate.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)
   );
