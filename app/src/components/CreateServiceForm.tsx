@@ -9,12 +9,6 @@ export interface ServiceFormData {
   frequency: 'monthly' | 'weekly' | 'yearly';
   recipientAddress: string;
   autoPay: boolean;
-  /**
-   * How payments are executed:
-   * - `PAS`: on-chain SubscriptionManagerFLOW (native PAS).
-   * - `PAS_X402`: off-chain x402 payments (PAS).
-   */
-  paymentToken: 'PAS' | 'PAS_X402';
   /** When true, create a confidential (FHE) subscription on Sepolia. */
   isPrivate?: boolean;
   /** When set, subscribe to this existing service (API uses it instead of creating a new one). */
@@ -42,9 +36,6 @@ export default function CreateServiceForm({
   const [frequency, setFrequency] = useState<'monthly' | 'weekly' | 'yearly'>((initialData?.frequency as 'monthly' | 'weekly' | 'yearly') || 'monthly');
   const [recipientAddress, setRecipientAddress] = useState(initialData?.recipientAddress || account?.address || '');
   const [autoPay, setAutoPay] = useState(initialData?.autoPay ?? true);
-  const [paymentToken, setPaymentToken] = useState<
-    'PAS' | 'PAS_X402'
-  >(initialData?.paymentToken ?? 'PAS');
   const [isPrivate, setIsPrivate] = useState(initialData?.isPrivate ?? false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -83,7 +74,6 @@ export default function CreateServiceForm({
       frequency,
       recipientAddress: recipientAddress.trim(),
       autoPay,
-      paymentToken,
       isPrivate,
       ...(existingServiceId ? { serviceId: existingServiceId } : {}),
     });
@@ -135,7 +125,7 @@ export default function CreateServiceForm({
           <div className="form-group-row">
             <div className="form-group">
               <label className="form-label">
-                Cost ({paymentToken === 'PAS' ? (isPrivate ? "ETH" : "PAS") : "PAS"}) <span className="required">*</span>
+                Cost ({isPrivate ? "ETH" : "PAS"}) <span className="required">*</span>
               </label>
               <input
                 type="number"
@@ -173,23 +163,11 @@ export default function CreateServiceForm({
           </div>
 
           <div className="form-group">
-              <label className="form-label">
-                Payment Asset <span className="required">*</span>
-              </label>
-              <select
-                className="form-select"
-                value={paymentToken}
-                onChange={(e) => {
-                  const next = e.target.value as 'PAS' | 'PAS_X402';
-                  setPaymentToken(next);
-                  if (next !== 'PAS') setIsPrivate(false);
-                }}
-                disabled={loading}
-              >
-                <option value="PAS">Native PAS (on-chain)</option>
-                <option value="PAS_X402">PAS (x402, off-chain)</option>
-              </select>
+            <div className="form-hint" style={{ marginBottom: '0.75rem' }}>
+              <strong>Payment asset: PAS</strong> — one asset for both on-chain subscription registration and
+              x402 PAS settlement (the app uses on-chain billing when your subscription is linked to the contract).
             </div>
+          </div>
 
           <div className="form-group">
             <label className="form-label">
@@ -226,7 +204,7 @@ export default function CreateServiceForm({
             </div>
           </div>
 
-          {paymentToken === 'PAS' && CONFIDENTIAL_SUBSCRIPTION_CONTRACT_ADDRESS && !isEditMode && (
+          {CONFIDENTIAL_SUBSCRIPTION_CONTRACT_ADDRESS && !isEditMode && (
             <div className="form-group">
               <label className="checkbox-group">
                 <input

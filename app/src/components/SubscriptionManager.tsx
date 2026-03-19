@@ -201,14 +201,15 @@ export default function SubscriptionManager({
     frequency: 'monthly' | 'weekly' | 'yearly';
     recipientAddress: string;
     autoPay: boolean;
-    paymentToken: 'PAS' | 'PAS_X402';
     isPrivate?: boolean;
   }) => {
     if (!editingSubscription) return;
 
     try {
       setLoading(true);
-      const updates: any = {
+      const updates: Partial<
+        Omit<Subscription, 'id' | 'lastPaymentDate' | 'nextPaymentDate'>
+      > = {
         service: serviceData.service,
         cost: serviceData.cost,
         frequency: serviceData.frequency,
@@ -216,21 +217,10 @@ export default function SubscriptionManager({
         autoPay: serviceData.autoPay,
       };
 
-      if (!editingSubscription.onChainSubscriptionId) {
-        if (serviceData.paymentToken === 'PAS') {
-          onError?.('Switching to on-chain PAS requires creating a new subscription.');
-          return;
-        }
-        // Off-chain PAS x402 subscription.
-        updates.usageData = { stablecoin: 'PAS' };
-      } else {
-        if (serviceData.paymentToken !== 'PAS') {
-          onError?.('On-chain PAS subscriptions cannot be switched to off-chain payments.');
-          return;
-        }
-      }
-
-      const success = await subscriptionAgent.updateSubscription(editingSubscription.id, updates);
+      const success = await subscriptionAgent.updateSubscription(
+        editingSubscription.id,
+        updates
+      );
       
       if (success) {
         onSuccess?.(`Service "${serviceData.service}" updated successfully!`);
@@ -254,10 +244,7 @@ export default function SubscriptionManager({
       return;
     }
 
-    const assetLabel =
-      subscription.paymentToken === 'PAS' || subscription.paymentToken === 'PAS_X402'
-        ? 'PAS'
-        : 'PAS';
+    const assetLabel = 'PAS';
 
     try {
       setLoading(true);
@@ -453,7 +440,6 @@ export default function SubscriptionManager({
             frequency: subscribeToService.frequency as 'monthly' | 'weekly' | 'yearly',
             recipientAddress: subscribeToService.recipientAddress,
             autoPay: true,
-            paymentToken: 'PAS',
             serviceId: subscribeToService.id,
           } : undefined}
           onSubmit={async (serviceData) => {
@@ -465,55 +451,41 @@ export default function SubscriptionManager({
               setLoading(true);
               setSubscribeToService(null);
 
-              if (serviceData.paymentToken === 'PAS') {
-                onSuccess?.('Creating subscription on-chain...');
-                const isPrivate =
-                  !!serviceData.isPrivate &&
-                  !!CONFIDENTIAL_SUBSCRIPTION_CONTRACT_ADDRESS;
-                const { subscriptionId: onChainId, txHash } = isPrivate
-                  ? await confidentialSubscribe(
-                      serviceData.recipientAddress,
-                      serviceData.cost,
-                      serviceData.frequency
-                    )
-                  : await contractSubscribe(
-                      serviceData.recipientAddress,
-                      serviceData.cost,
-                      serviceData.frequency
-                    );
-                await subscriptionApi.createSubscription({
-                  ...(serviceData.serviceId
-                    ? { serviceId: serviceData.serviceId }
-                    : { serviceName: serviceData.service }),
-                  cost: serviceData.cost,
-                  frequency: serviceData.frequency,
-                  recipientAddress: serviceData.recipientAddress,
-                  userAddress: account.address,
-                  autoPay: serviceData.autoPay,
-                  onChainSubscriptionId: onChainId,
-                  onChainContractAddress: isPrivate
-                    ? CONFIDENTIAL_SUBSCRIPTION_CONTRACT_ADDRESS
-                    : SUBSCRIPTION_CONTRACT_ADDRESS || undefined,
-                });
-                onSuccess?.(
-                  `Subscription created on-chain. Tx: ${txHash.slice(0, 10)}...`
-                );
-              } else {
-                await subscriptionApi.createSubscription({
-                  ...(serviceData.serviceId
-                    ? { serviceId: serviceData.serviceId }
-                    : { serviceName: serviceData.service }),
-                  cost: serviceData.cost,
-                  frequency: serviceData.frequency,
-                  recipientAddress: serviceData.recipientAddress,
-                  userAddress: account.address,
-                  autoPay: serviceData.autoPay,
-                  usageData: {
-                    stablecoin: 'PAS',
-                  },
-                });
-                onSuccess?.(`Subscription created (off-chain x402 PAS).`);
-              }
+              onSuccess?.('Creating subscription on-chain and syncing with API...');
+              const isPrivate =
+                !!serviceData.isPrivate &&
+                !!CONFIDENTIAL_SUBSCRIPTION_CONTRACT_ADDRESS;
+              const { subscriptionId: onChainId, txHash } = isPrivate
+                ? await confidentialSubscribe(
+                    serviceData.recipientAddress,
+                    serviceData.cost,
+                    serviceData.frequency
+                  )
+                : await contractSubscribe(
+                    serviceData.recipientAddress,
+                    serviceData.cost,
+                    serviceData.frequency
+                  );
+              await subscriptionApi.createSubscription({
+                ...(serviceData.serviceId
+                  ? { serviceId: serviceData.serviceId }
+                  : { serviceName: serviceData.service }),
+                cost: serviceData.cost,
+                frequency: serviceData.frequency,
+                recipientAddress: serviceData.recipientAddress,
+                userAddress: account.address,
+                autoPay: serviceData.autoPay,
+                onChainSubscriptionId: onChainId,
+                onChainContractAddress: isPrivate
+                  ? CONFIDENTIAL_SUBSCRIPTION_CONTRACT_ADDRESS
+                  : SUBSCRIPTION_CONTRACT_ADDRESS || undefined,
+                usageData: {
+                  stablecoin: 'PAS',
+                },
+              });
+              onSuccess?.(
+                `Subscription created (PAS: on-chain + x402-ready). Tx: ${txHash.slice(0, 10)}...`
+              );
               setShowCreateForm(false);
               await loadSubscriptions();
               loadSuggestions();
@@ -539,7 +511,6 @@ export default function SubscriptionManager({
             frequency: editingSubscription.frequency,
             recipientAddress: editingSubscription.recipientAddress,
             autoPay: editingSubscription.autoPay,
-            paymentToken: editingSubscription.paymentToken,
           }}
           onSubmit={handleUpdateSubscription}
           onCancel={() => setEditingSubscription(null)}
@@ -579,7 +550,6 @@ export default function SubscriptionManager({
         const allPayments: Array<{
           payment: Payment;
           serviceName: string;
-          paymentAsset: Subscription['paymentToken'];
         }> = [];
         paymentHistory.forEach((payments, subscriptionId) => {
           const subscription = subscriptions.find(s => s.id === subscriptionId);
@@ -588,7 +558,6 @@ export default function SubscriptionManager({
               allPayments.push({
                 payment,
                 serviceName: subscription.service || 'Unknown Service',
-                paymentAsset: subscription.paymentToken,
               });
             });
           }
@@ -611,12 +580,11 @@ export default function SubscriptionManager({
             </h2>
             <div className="payment-history-list">
               {allPayments.length > 0 ? (
-                allPayments.map(({ payment, serviceName, paymentAsset }) => (
+                allPayments.map(({ payment, serviceName }) => (
                   <PaymentHistoryItem
                     key={payment.id}
                     payment={payment}
                     serviceName={serviceName}
-                    paymentAsset={paymentAsset}
                   />
                 ))
               ) : (

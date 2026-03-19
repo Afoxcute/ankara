@@ -5,13 +5,11 @@ import './PaymentHistoryItem.css';
 interface PaymentHistoryItemProps {
   payment: Payment;
   serviceName: string;
-  paymentAsset: 'PAS' | 'PAS_X402';
 }
 
 export default function PaymentHistoryItem({
   payment,
   serviceName,
-  paymentAsset,
 }: PaymentHistoryItemProps) {
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -59,8 +57,7 @@ export default function PaymentHistoryItem({
   };
 
   const dateInfo = formatDate(payment.timestamp);
-  const assetLabel =
-    paymentAsset === 'PAS' || paymentAsset === 'PAS_X402' ? 'PAS' : 'PAS';
+  const assetLabel = 'PAS';
 
   return (
     <div className={`payment-history-item ${isExpanded ? 'expanded' : ''}`}>

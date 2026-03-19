@@ -11,14 +11,15 @@ import { subscriptionApi, Subscription as ApiSubscription } from "./subscription
 export interface Subscription {
   id: string;
   service: string;
-  cost: number; // human amount (PAS or stablecoin depending on paymentToken)
+  cost: number; // human amount in PAS
   frequency: 'monthly' | 'weekly' | 'yearly';
   recipientAddress: string; // Service provider wallet address
   lastPaymentDate: Date | null;
   nextPaymentDate: Date;
   isActive: boolean;
   autoPay: boolean;
-  paymentToken: 'PAS' | 'PAS_X402';
+  /** PAS only; settlement is on-chain when `onChainSubscriptionId` is set, else x402. */
+  paymentToken: 'PAS';
   onChainSubscriptionId?: string | null; // SubscriptionManager contract id when created on-chain
   usageData?: {
     lastUsed?: Date;
@@ -41,14 +42,6 @@ function apiToLocalSubscription(apiSub: ApiSubscription): Subscription {
     costValue = parseFloat(String(apiSub.cost));
   }
 
-  const stablecoin = apiSub.usageData?.stablecoin;
-  const paymentToken: Subscription['paymentToken'] =
-    apiSub.onChainSubscriptionId
-      ? 'PAS'
-      : stablecoin === 'PAS'
-        ? 'PAS_X402'
-        : 'PAS_X402';
-
   return {
     id: apiSub.id,
     service: apiSub.service?.name || 'Unknown Service',
@@ -60,7 +53,7 @@ function apiToLocalSubscription(apiSub: ApiSubscription): Subscription {
     isActive: apiSub.isActive,
     autoPay: apiSub.autoPay,
     onChainSubscriptionId: apiSub.onChainSubscriptionId ?? undefined,
-    paymentToken,
+    paymentToken: 'PAS',
     usageData: apiSub.usageData ? {
       lastUsed: apiSub.usageData.lastUsed ? new Date(apiSub.usageData.lastUsed) : undefined,
       usageCount: apiSub.usageData.usageCount,
@@ -249,11 +242,14 @@ export class SubscriptionAgent {
         return { success: false, error: 'Wallet not connected' };
       }
 
-      if (subscription.paymentToken !== 'PAS_X402') {
-        return { success: false, error: 'Unsupported off-chain payment token (stablecoins removed)' };
+      if (subscription.onChainSubscriptionId) {
+        return {
+          success: false,
+          error: 'This subscription is settled on-chain; use Pay Now from the dashboard.',
+        };
       }
 
-      // Off-chain PAS payments via x402.
+      // API-only subscriptions: settle with x402 PAS.
       const amountInBaseUnits = parseUnits(subscription.cost.toString(), 18).toString();
 
       // Create payment requirements for x402

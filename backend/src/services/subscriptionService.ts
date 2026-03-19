@@ -16,6 +16,8 @@ export interface CreateSubscriptionInput {
     lastUsed?: Date;
     usageCount?: number;
     avgUsagePerMonth?: number;
+    /** Same PAS asset as on-chain; enables x402 settlement for API-only rows. */
+    stablecoin?: 'PAS';
   };
 }
 
@@ -30,6 +32,7 @@ export interface UpdateSubscriptionInput {
     lastUsed?: Date;
     usageCount?: number;
     avgUsagePerMonth?: number;
+    stablecoin?: 'PAS';
   };
 }
 
