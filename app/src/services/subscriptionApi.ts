@@ -367,10 +367,15 @@ export const statisticsApi = {
   /**
    * Get overall statistics summary
    */
-  async getSummary(startDate?: string, endDate?: string): Promise<StatisticsSummary> {
+  async getSummary(
+    startDate?: string,
+    endDate?: string,
+    recipientAddress?: string
+  ): Promise<StatisticsSummary> {
     const params: any = {};
     if (startDate) params.startDate = startDate;
     if (endDate) params.endDate = endDate;
+    if (recipientAddress) params.recipientAddress = recipientAddress;
     
     const response = await api.get('/statistics/summary', { params });
     return response.data.data;
@@ -379,10 +384,15 @@ export const statisticsApi = {
   /**
    * Get revenue statistics by service
    */
-  async getRevenueByService(startDate?: string, endDate?: string): Promise<RevenueByService[]> {
+  async getRevenueByService(
+    startDate?: string,
+    endDate?: string,
+    recipientAddress?: string
+  ): Promise<RevenueByService[]> {
     const params: any = {};
     if (startDate) params.startDate = startDate;
     if (endDate) params.endDate = endDate;
+    if (recipientAddress) params.recipientAddress = recipientAddress;
     
     const response = await api.get('/statistics/revenue-by-service', { params });
     return response.data.data;
@@ -391,10 +401,15 @@ export const statisticsApi = {
   /**
    * Get payment success/failure rates
    */
-  async getSuccessRates(startDate?: string, endDate?: string): Promise<PaymentSuccessRates> {
+  async getSuccessRates(
+    startDate?: string,
+    endDate?: string,
+    recipientAddress?: string
+  ): Promise<PaymentSuccessRates> {
     const params: any = {};
     if (startDate) params.startDate = startDate;
     if (endDate) params.endDate = endDate;
+    if (recipientAddress) params.recipientAddress = recipientAddress;
     
     const response = await api.get('/statistics/success-rates', { params });
     return response.data.data;
@@ -403,10 +418,15 @@ export const statisticsApi = {
   /**
    * Get detailed service breakdown analytics
    */
-  async getServiceBreakdown(startDate?: string, endDate?: string): Promise<ServiceBreakdown[]> {
+  async getServiceBreakdown(
+    startDate?: string,
+    endDate?: string,
+    recipientAddress?: string
+  ): Promise<ServiceBreakdown[]> {
     const params: any = {};
     if (startDate) params.startDate = startDate;
     if (endDate) params.endDate = endDate;
+    if (recipientAddress) params.recipientAddress = recipientAddress;
     
     const response = await api.get('/statistics/service-breakdown', { params });
     return response.data.data;
@@ -422,6 +442,7 @@ export const statisticsApi = {
     status?: string;
     serviceId?: string;
     userAddress?: string;
+    recipientAddress?: string;
   }): Promise<RecentReceipt[]> {
     const params: any = {};
     if (options?.limit) params.limit = options.limit;
@@ -430,6 +451,7 @@ export const statisticsApi = {
     if (options?.status) params.status = options.status;
     if (options?.serviceId) params.serviceId = options.serviceId;
     if (options?.userAddress) params.userAddress = options.userAddress;
+    if (options?.recipientAddress) params.recipientAddress = options.recipientAddress;
     
     const response = await api.get('/statistics/receipts/recent', { params });
     return response.data.data;

@@ -13,8 +13,9 @@ router.get('/summary', async (req, res) => {
   try {
     const startDate = req.query.startDate ? new Date(req.query.startDate as string) : undefined;
     const endDate = req.query.endDate ? new Date(req.query.endDate as string) : undefined;
+    const recipientAddress = req.query.recipientAddress as string | undefined;
 
-    const summary = await subscriptionService.getStatisticsSummary(startDate, endDate);
+    const summary = await subscriptionService.getStatisticsSummary(startDate, endDate, recipientAddress);
     res.json({ success: true, data: summary });
   } catch (error: any) {
     console.error('Error fetching statistics summary:', error);
@@ -34,8 +35,9 @@ router.get('/revenue-by-service', async (req, res) => {
   try {
     const startDate = req.query.startDate ? new Date(req.query.startDate as string) : undefined;
     const endDate = req.query.endDate ? new Date(req.query.endDate as string) : undefined;
+    const recipientAddress = req.query.recipientAddress as string | undefined;
 
-    const revenue = await subscriptionService.getRevenueByService(startDate, endDate);
+    const revenue = await subscriptionService.getRevenueByService(startDate, endDate, recipientAddress);
     res.json({ success: true, data: revenue });
   } catch (error: any) {
     console.error('Error fetching revenue by service:', error);
@@ -55,8 +57,9 @@ router.get('/success-rates', async (req, res) => {
   try {
     const startDate = req.query.startDate ? new Date(req.query.startDate as string) : undefined;
     const endDate = req.query.endDate ? new Date(req.query.endDate as string) : undefined;
+    const recipientAddress = req.query.recipientAddress as string | undefined;
 
-    const rates = await subscriptionService.getPaymentSuccessRates(startDate, endDate);
+    const rates = await subscriptionService.getPaymentSuccessRates(startDate, endDate, recipientAddress);
     res.json({ success: true, data: rates });
   } catch (error: any) {
     console.error('Error fetching success rates:', error);
@@ -76,8 +79,9 @@ router.get('/service-breakdown', async (req, res) => {
   try {
     const startDate = req.query.startDate ? new Date(req.query.startDate as string) : undefined;
     const endDate = req.query.endDate ? new Date(req.query.endDate as string) : undefined;
+    const recipientAddress = req.query.recipientAddress as string | undefined;
 
-    const breakdown = await subscriptionService.getServiceBreakdown(startDate, endDate);
+    const breakdown = await subscriptionService.getServiceBreakdown(startDate, endDate, recipientAddress);
     res.json({ success: true, data: breakdown });
   } catch (error: any) {
     console.error('Error fetching service breakdown:', error);
@@ -101,6 +105,7 @@ router.get('/receipts/recent', async (req, res) => {
     const status = req.query.status as string | undefined;
     const serviceId = req.query.serviceId as string | undefined;
     const userAddress = req.query.userAddress as string | undefined;
+    const recipientAddress = req.query.recipientAddress as string | undefined;
 
     const receipts = await subscriptionService.getRecentReceipts(limit, {
       startDate,
@@ -108,6 +113,7 @@ router.get('/receipts/recent', async (req, res) => {
       status,
       serviceId,
       userAddress,
+      recipientAddress,
     });
 
     res.json({ success: true, data: receipts });

@@ -136,10 +136,22 @@ export class SubscriptionService {
     const addr = recipientAddress.toLowerCase();
 
     const where: any = {
-      recipientAddress: {
-        equals: addr,
-        mode: "insensitive",
-      },
+      OR: [
+        {
+          recipientAddress: {
+            equals: addr,
+            mode: "insensitive",
+          },
+        },
+        {
+          service: {
+            recipientAddress: {
+              equals: addr,
+              mode: "insensitive",
+            },
+          },
+        },
+      ],
       isActive: true,
     };
 
@@ -283,7 +295,7 @@ export class SubscriptionService {
 
     const existingService = await prisma.service.findUnique({
       where: { id: finalServiceId },
-      select: { id: true },
+      select: { id: true, recipientAddress: true },
     });
     if (!existingService) {
       throw new Error(
@@ -292,6 +304,8 @@ export class SubscriptionService {
     }
 
     const normalizedUser = userAddress.toLowerCase();
+    // If serviceId is used, the subscription recipient must be the service owner's wallet.
+    const resolvedRecipientAddress = existingService?.recipientAddress ?? recipientAddress;
     const normalizedContract = onChainContractAddress
       ? onChainContractAddress.toLowerCase()
       : null;
@@ -330,7 +344,7 @@ export class SubscriptionService {
             serviceId: finalServiceId,
             cost: new Decimal(cost),
             frequency,
-            recipientAddress,
+            recipientAddress: resolvedRecipientAddress,
             nextPaymentDate,
             autoPay: autoPay ?? false,
             usageData:
@@ -356,7 +370,7 @@ export class SubscriptionService {
           userAddress: normalizedUser,
           cost: new Decimal(cost),
           frequency,
-          recipientAddress,
+          recipientAddress: resolvedRecipientAddress,
           nextPaymentDate,
           autoPay: autoPay ?? false,
           onChainSubscriptionId: chainSubId,
@@ -568,11 +582,44 @@ export class SubscriptionService {
     return cacheService.getOrSet(
       cacheKey,
       async () => {
-        const payments = await prisma.payment.findMany({
+        let payments = await prisma.payment.findMany({
           where: { subscriptionId },
           orderBy: { timestamp: 'desc' },
           take: limit,
         });
+
+        // Fallback: if no rows for this DB subscription, try the same on-chain subscription key.
+        // This helps when historical data created parallel DB rows that share on-chain ids.
+        if (payments.length === 0) {
+          const base = await prisma.subscription.findUnique({
+            where: { id: subscriptionId },
+            select: {
+              onChainSubscriptionId: true,
+              onChainContractAddress: true,
+            },
+          });
+
+          if (base?.onChainSubscriptionId && base?.onChainContractAddress) {
+            const siblings = await prisma.subscription.findMany({
+              where: {
+                onChainSubscriptionId: base.onChainSubscriptionId,
+                onChainContractAddress: base.onChainContractAddress,
+              },
+              select: { id: true },
+            });
+            const siblingIds = siblings.map((s) => s.id);
+
+            if (siblingIds.length > 0) {
+              payments = await prisma.payment.findMany({
+                where: {
+                  subscriptionId: { in: siblingIds },
+                },
+                orderBy: { timestamp: 'desc' },
+                take: limit,
+              });
+            }
+          }
+        }
         
         // Convert Decimal amounts to numbers for JSON serialization
         return payments.map(payment => ({
@@ -810,11 +857,15 @@ export class SubscriptionService {
   /**
    * Get revenue statistics by service (with caching)
    */
-  async getRevenueByService(startDate?: Date, endDate?: Date) {
+  async getRevenueByService(startDate?: Date, endDate?: Date, recipientAddress?: string) {
     const cacheKey = CacheKeys.revenueByService(
       startDate?.toISOString(),
       endDate?.toISOString()
     );
+
+    if (recipientAddress) {
+      return this.fetchRevenueByServiceInternal(startDate, endDate, recipientAddress);
+    }
     
     return cacheService.getOrSet(
       cacheKey,
@@ -828,7 +879,7 @@ export class SubscriptionService {
   /**
    * Internal method to fetch revenue by service (without cache)
    */
-  private async fetchRevenueByServiceInternal(startDate?: Date, endDate?: Date) {
+  private async fetchRevenueByServiceInternal(startDate?: Date, endDate?: Date, recipientAddress?: string) {
     const whereClause: any = {
       status: 'completed',
     };
@@ -841,6 +892,17 @@ export class SubscriptionService {
       if (endDate) {
         whereClause.timestamp.lte = endDate;
       }
+    }
+
+    if (recipientAddress) {
+      whereClause.subscription = {
+        service: {
+          recipientAddress: {
+            equals: recipientAddress.toLowerCase(),
+            mode: 'insensitive',
+          },
+        },
+      };
     }
 
     const payments = await prisma.payment.findMany({
@@ -893,11 +955,15 @@ export class SubscriptionService {
   /**
    * Get payment success/failure rates (with caching)
    */
-  async getPaymentSuccessRates(startDate?: Date, endDate?: Date) {
+  async getPaymentSuccessRates(startDate?: Date, endDate?: Date, recipientAddress?: string) {
     const cacheKey = CacheKeys.successRates(
       startDate?.toISOString(),
       endDate?.toISOString()
     );
+
+    if (recipientAddress) {
+      return this.fetchPaymentSuccessRatesInternal(startDate, endDate, recipientAddress);
+    }
     
     return cacheService.getOrSet(
       cacheKey,
@@ -911,7 +977,7 @@ export class SubscriptionService {
   /**
    * Internal method to fetch payment success rates (without cache)
    */
-  private async fetchPaymentSuccessRatesInternal(startDate?: Date, endDate?: Date) {
+  private async fetchPaymentSuccessRatesInternal(startDate?: Date, endDate?: Date, recipientAddress?: string) {
     const whereClause: any = {};
 
     if (startDate || endDate) {
@@ -922,6 +988,17 @@ export class SubscriptionService {
       if (endDate) {
         whereClause.timestamp.lte = endDate;
       }
+    }
+
+    if (recipientAddress) {
+      whereClause.subscription = {
+        service: {
+          recipientAddress: {
+            equals: recipientAddress.toLowerCase(),
+            mode: 'insensitive',
+          },
+        },
+      };
     }
 
     const payments = await prisma.payment.groupBy({
@@ -955,11 +1032,15 @@ export class SubscriptionService {
   /**
    * Get service breakdown analytics (with caching)
    */
-  async getServiceBreakdown(startDate?: Date, endDate?: Date) {
+  async getServiceBreakdown(startDate?: Date, endDate?: Date, recipientAddress?: string) {
     const cacheKey = CacheKeys.serviceBreakdown(
       startDate?.toISOString(),
       endDate?.toISOString()
     );
+
+    if (recipientAddress) {
+      return this.fetchServiceBreakdownInternal(startDate, endDate, recipientAddress);
+    }
     
     return cacheService.getOrSet(
       cacheKey,
@@ -973,7 +1054,7 @@ export class SubscriptionService {
   /**
    * Internal method to fetch service breakdown (without cache)
    */
-  private async fetchServiceBreakdownInternal(startDate?: Date, endDate?: Date) {
+  private async fetchServiceBreakdownInternal(startDate?: Date, endDate?: Date, recipientAddress?: string) {
     const whereClause: any = {
       status: 'completed',
     };
@@ -986,6 +1067,17 @@ export class SubscriptionService {
       if (endDate) {
         whereClause.timestamp.lte = endDate;
       }
+    }
+
+    if (recipientAddress) {
+      whereClause.subscription = {
+        service: {
+          recipientAddress: {
+            equals: recipientAddress.toLowerCase(),
+            mode: 'insensitive',
+          },
+        },
+      };
     }
 
     const payments = await prisma.payment.findMany({
@@ -1151,6 +1243,7 @@ export class SubscriptionService {
     status?: string;
     serviceId?: string;
     userAddress?: string;
+    recipientAddress?: string;
   }) {
     const whereClause: any = {};
 
@@ -1178,6 +1271,18 @@ export class SubscriptionService {
       whereClause.subscription = {
         ...whereClause.subscription,
         userAddress: options.userAddress.toLowerCase(),
+      };
+    }
+
+    if (options?.recipientAddress) {
+      whereClause.subscription = {
+        ...whereClause.subscription,
+        service: {
+          recipientAddress: {
+            equals: options.recipientAddress.toLowerCase(),
+            mode: 'insensitive',
+          },
+        },
       };
     }
 
@@ -1221,11 +1326,15 @@ export class SubscriptionService {
   /**
    * Get overall statistics summary (with caching)
    */
-  async getStatisticsSummary(startDate?: Date, endDate?: Date) {
+  async getStatisticsSummary(startDate?: Date, endDate?: Date, recipientAddress?: string) {
     const cacheKey = CacheKeys.statisticsSummary(
       startDate?.toISOString(),
       endDate?.toISOString()
     );
+
+    if (recipientAddress) {
+      return this.fetchStatisticsSummaryInternal(startDate, endDate, recipientAddress);
+    }
     
     return cacheService.getOrSet(
       cacheKey,
@@ -1239,7 +1348,7 @@ export class SubscriptionService {
   /**
    * Internal method to fetch statistics summary (without cache)
    */
-  private async fetchStatisticsSummaryInternal(startDate?: Date, endDate?: Date) {
+  private async fetchStatisticsSummaryInternal(startDate?: Date, endDate?: Date, recipientAddress?: string) {
     const whereClause: any = {};
 
     if (startDate || endDate) {
@@ -1250,6 +1359,17 @@ export class SubscriptionService {
       if (endDate) {
         whereClause.timestamp.lte = endDate;
       }
+    }
+
+    if (recipientAddress) {
+      whereClause.subscription = {
+        service: {
+          recipientAddress: {
+            equals: recipientAddress.toLowerCase(),
+            mode: 'insensitive',
+          },
+        },
+      };
     }
 
     const [totalPayments, completedPayments, totalRevenue, serviceCount, uniquePayers] = await Promise.all([

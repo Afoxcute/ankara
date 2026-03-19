@@ -13,7 +13,11 @@ import {
 } from "../services/subscriptionApi";
 import "./RevenueAnalytics.css";
 
-export default function RevenueAnalytics() {
+interface RevenueAnalyticsProps {
+  merchantAddress?: string;
+}
+
+export default function RevenueAnalytics({ merchantAddress }: RevenueAnalyticsProps) {
   const account = useActiveAccount();
   const [activeTab, setActiveTab] = useState<'summary' | 'revenue' | 'success' | 'breakdown' | 'receipts' | 'failed'>('summary');
   const [loading, setLoading] = useState(false);
@@ -49,38 +53,64 @@ export default function RevenueAnalytics() {
 
       switch (activeTab) {
         case 'summary':
-          const summaryData = await statisticsApi.getSummary(dateParams.startDate, dateParams.endDate);
+          const summaryData = await statisticsApi.getSummary(
+            dateParams.startDate,
+            dateParams.endDate,
+            merchantAddress
+          );
           setSummary(summaryData);
           break;
 
         case 'revenue':
-          const revenueData = await statisticsApi.getRevenueByService(dateParams.startDate, dateParams.endDate);
+          const revenueData = await statisticsApi.getRevenueByService(
+            dateParams.startDate,
+            dateParams.endDate,
+            merchantAddress
+          );
           setRevenueByService(revenueData);
           break;
 
         case 'success':
-          const ratesData = await statisticsApi.getSuccessRates(dateParams.startDate, dateParams.endDate);
+          const ratesData = await statisticsApi.getSuccessRates(
+            dateParams.startDate,
+            dateParams.endDate,
+            merchantAddress
+          );
           setSuccessRates(ratesData);
           break;
 
         case 'breakdown':
-          const breakdownData = await statisticsApi.getServiceBreakdown(dateParams.startDate, dateParams.endDate);
+          const breakdownData = await statisticsApi.getServiceBreakdown(
+            dateParams.startDate,
+            dateParams.endDate,
+            merchantAddress
+          );
           setServiceBreakdown(breakdownData);
           break;
 
         case 'receipts':
-          if (account?.address) {
+          if (merchantAddress) {
+            const merchantReceipts = await statisticsApi.getRecentReceipts({
+              ...dateParams,
+              recipientAddress: merchantAddress,
+              limit: 50,
+            });
+            setRecentReceipts(merchantReceipts);
+            setPayerReceipts(null);
+          } else if (account?.address) {
             const payerData = await statisticsApi.getPayerReceipts(account.address, {
               ...dateParams,
               limit: 50,
             });
             setPayerReceipts(payerData);
+            setRecentReceipts([]);
           } else {
             const recentData = await statisticsApi.getRecentReceipts({
               ...dateParams,
               limit: 50,
             });
             setRecentReceipts(recentData);
+            setPayerReceipts(null);
           }
           break;
         case 'failed':
@@ -353,7 +383,7 @@ export default function RevenueAnalytics() {
             {/* Receipts Tab */}
             {activeTab === 'receipts' && (
               <div className="receipts-list">
-                {account?.address ? (
+                {!merchantAddress && account?.address ? (
                   payerReceipts ? (
                     <>
                       <div className="receipts-summary">
@@ -408,7 +438,7 @@ export default function RevenueAnalytics() {
                   )
                 ) : (
                   <>
-                    <h3>Recent Receipts (All Users)</h3>
+                    <h3>{merchantAddress ? 'Merchant Receipts' : 'Recent Receipts (All Users)'}</h3>
                     <div className="receipts-table">
                       <table>
                         <thead>

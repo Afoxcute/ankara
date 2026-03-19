@@ -2,6 +2,7 @@ import { Fragment, useEffect, useMemo, useState } from "react";
 import { useActiveAccount } from "thirdweb/react";
 import {
   Payment,
+  RecentReceipt,
   RevenueByService,
   Service,
   Subscription,
@@ -79,12 +80,15 @@ export default function MerchantDashboard({
       const [services, subs, revenue] = await Promise.all([
         subscriptionApi.getMerchantServices(merchantAddress),
         subscriptionApi.getMerchantSubscriptions(merchantAddress, contractAddress),
-        statisticsApi.getRevenueByService(dateStart, dateEnd),
+        statisticsApi.getRevenueByService(dateStart, dateEnd, merchantAddress),
       ]);
 
       setMerchantServices(services);
       setMerchantSubscriptions(subs);
       setRevenueByService(revenue);
+      // Reset payment-history cache to avoid stale "no payments" after new payments are made.
+      setPaymentsBySubscriptionId(new Map());
+      setExpandedSubscriptionId(null);
 
       onSuccess?.("Merchant dashboard synced.");
     } catch (e) {
@@ -136,24 +140,67 @@ export default function MerchantDashboard({
     );
   }, [merchantSubscriptions]);
 
-  const ensurePaymentsLoaded = async (subscriptionId: string) => {
-    if (paymentsBySubscriptionId.has(subscriptionId)) return;
+  const mapRecentReceiptToPayment = (r: RecentReceipt): Payment => {
+    return {
+      id: r.id,
+      subscriptionId: r.subscription.id,
+      amount: r.amount,
+      transactionHash: r.transactionHash,
+      network: r.network,
+      status: r.status,
+      errorMessage: r.errorMessage,
+      timestamp: r.timestamp,
+    };
+  };
 
-    const payments = await subscriptionApi.getPaymentHistory(subscriptionId, 20);
+  const ensurePaymentsLoaded = async (sub: Subscription) => {
+    if (paymentsBySubscriptionId.has(sub.id)) return;
+
+    const direct = await subscriptionApi.getPaymentHistory(sub.id, 20);
+    if (direct.length > 0) {
+      setPaymentsBySubscriptionId((prev) => {
+        const next = new Map(prev);
+        next.set(sub.id, direct);
+        return next;
+      });
+      return;
+    }
+
+    // Fallback: pull merchant receipts scoped by service + subscriber.
+    // This covers legacy rows where payment history may be attached to a sibling DB subscription.
+    if (!merchantAddress) {
+      setPaymentsBySubscriptionId((prev) => {
+        const next = new Map(prev);
+        next.set(sub.id, []);
+        return next;
+      });
+      return;
+    }
+
+    const receipts = await statisticsApi.getRecentReceipts({
+      recipientAddress: merchantAddress,
+      serviceId: sub.serviceId,
+      userAddress: sub.userAddress,
+      limit: 50,
+    });
+    const mapped = receipts
+      .filter((r) => r.service.id === sub.serviceId && r.payer.address.toLowerCase() === sub.userAddress.toLowerCase())
+      .map(mapRecentReceiptToPayment);
+
     setPaymentsBySubscriptionId((prev) => {
       const next = new Map(prev);
-      next.set(subscriptionId, payments);
+      next.set(sub.id, mapped);
       return next;
     });
   };
 
-  const toggleExpanded = async (subscriptionId: string) => {
-    const willExpand = expandedSubscriptionId !== subscriptionId;
-    setExpandedSubscriptionId(willExpand ? subscriptionId : null);
+  const toggleExpanded = async (sub: Subscription) => {
+    const willExpand = expandedSubscriptionId !== sub.id;
+    setExpandedSubscriptionId(willExpand ? sub.id : null);
 
     if (willExpand) {
       try {
-        await ensurePaymentsLoaded(subscriptionId);
+        await ensurePaymentsLoaded(sub);
       } catch {
         // Error will be surfaced by onError in refresh; keep this silent to avoid UI flashing.
       }
@@ -319,7 +366,7 @@ export default function MerchantDashboard({
       ) : loading ? (
         <div className="loading">Loading merchant data...</div>
       ) : activeTab === "analytics" ? (
-        <RevenueAnalytics />
+        <RevenueAnalytics merchantAddress={merchantAddress} />
       ) : activeTab === "overview" ? (
         <>
           <div className="merchant-actions" style={{ justifyContent: "space-between" }}>
@@ -576,7 +623,7 @@ export default function MerchantDashboard({
                           <button
                             type="button"
                             className="btn btn-secondary btn-sm"
-                            onClick={() => void toggleExpanded(sub.id)}
+                            onClick={() => void toggleExpanded(sub)}
                           >
                             {expandedSubscriptionId === sub.id ? "Hide" : "View"}
                           </button>
