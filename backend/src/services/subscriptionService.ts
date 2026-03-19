@@ -1,3 +1,4 @@
+import { Prisma } from '@prisma/client';
 import { prisma } from '../lib/prisma';
 import { Decimal } from '@prisma/client/runtime/library';
 import { cacheService, CacheKeys, CacheTTL } from '../utils/cache';
@@ -172,31 +173,103 @@ export class SubscriptionService {
       throw new Error('Either serviceId or serviceName must be provided');
     }
 
-    const subscription = await prisma.subscription.create({
-      data: {
-        serviceId: finalServiceId,
-        userAddress: userAddress.toLowerCase(),
-        cost: new Decimal(cost),
-        frequency,
-        recipientAddress,
-        nextPaymentDate,
-        autoPay: autoPay ?? false,
-        onChainSubscriptionId: onChainSubscriptionId ?? null,
-        onChainContractAddress: onChainContractAddress ? onChainContractAddress.toLowerCase() : null,
-        usageData: usageData ? JSON.parse(JSON.stringify(usageData)) : null,
-      },
-      include: {
-        service: true,
-      },
-    });
+    const normalizedUser = userAddress.toLowerCase();
+    const normalizedContract = onChainContractAddress
+      ? onChainContractAddress.toLowerCase()
+      : null;
+    const chainSubId = onChainSubscriptionId ?? null;
 
-    // Invalidate caches (pattern so we clear key with and without contract address suffix)
-    await Promise.all([
-      cacheService.invalidatePattern(`${CacheKeys.userSubscriptions(userAddress)}*`),
-      cacheService.invalidatePattern('stats:*'), // Invalidate all statistics
-    ]);
+    const findByOnChainKeys = () =>
+      chainSubId && normalizedContract
+        ? prisma.subscription.findFirst({
+            where: {
+              onChainSubscriptionId: chainSubId,
+              onChainContractAddress: normalizedContract,
+            },
+            include: { service: true },
+          })
+        : Promise.resolve(null);
 
-    return subscription;
+    const invalidateUserCaches = () =>
+      Promise.all([
+        cacheService.invalidatePattern(`${CacheKeys.userSubscriptions(userAddress)}*`),
+        cacheService.invalidatePattern('stats:*'),
+      ]);
+
+    // @@unique([onChainSubscriptionId, onChainContractAddress]) — same chain row must not insert twice
+    const existingOnChain = await findByOnChainKeys();
+    if (existingOnChain) {
+      if (existingOnChain.userAddress.toLowerCase() !== normalizedUser) {
+        throw new Error(
+          'This on-chain subscription is already registered to another wallet in the database.'
+        );
+      }
+      if (!existingOnChain.isActive) {
+        const updated = await prisma.subscription.update({
+          where: { id: existingOnChain.id },
+          data: {
+            isActive: true,
+            serviceId: finalServiceId,
+            cost: new Decimal(cost),
+            frequency,
+            recipientAddress,
+            nextPaymentDate,
+            autoPay: autoPay ?? false,
+            usageData:
+              usageData !== undefined
+                ? JSON.parse(JSON.stringify(usageData))
+                : existingOnChain.usageData,
+          },
+          include: { service: true },
+        });
+        await cacheService.invalidate(CacheKeys.subscription(existingOnChain.id));
+        await invalidateUserCaches();
+        return updated;
+      }
+      await cacheService.invalidate(CacheKeys.subscription(existingOnChain.id));
+      await invalidateUserCaches();
+      return existingOnChain;
+    }
+
+    try {
+      const subscription = await prisma.subscription.create({
+        data: {
+          serviceId: finalServiceId,
+          userAddress: normalizedUser,
+          cost: new Decimal(cost),
+          frequency,
+          recipientAddress,
+          nextPaymentDate,
+          autoPay: autoPay ?? false,
+          onChainSubscriptionId: chainSubId,
+          onChainContractAddress: normalizedContract,
+          usageData: usageData ? JSON.parse(JSON.stringify(usageData)) : null,
+        },
+        include: {
+          service: true,
+        },
+      });
+
+      await invalidateUserCaches();
+
+      return subscription;
+    } catch (err) {
+      if (
+        err instanceof Prisma.PrismaClientKnownRequestError &&
+        err.code === 'P2002'
+      ) {
+        const raced = await findByOnChainKeys();
+        if (
+          raced &&
+          raced.userAddress.toLowerCase() === normalizedUser
+        ) {
+          await cacheService.invalidate(CacheKeys.subscription(raced.id));
+          await invalidateUserCaches();
+          return raced;
+        }
+      }
+      throw err;
+    }
   }
 
   /**
