@@ -267,9 +267,6 @@ export default function MerchantDashboard({
     <div className="merchant-dashboard">
       <div className="merchant-header">
         <h2>🏪 Merchant Dashboard</h2>
-        <div className="merchant-subtitle">
-          Services where <code>recipientAddress</code> = {account?.address ?? "—"}
-        </div>
       </div>
 
       <div className="merchant-filters">
@@ -317,9 +314,6 @@ export default function MerchantDashboard({
       ) : activeTab === "overview" ? (
         <>
           <div className="merchant-actions" style={{ justifyContent: "space-between" }}>
-            <div className="merchant-subtitle">
-              You can manage services you own (set by `recipientAddress`).
-            </div>
             <button
               type="button"
               className="btn btn-primary"
