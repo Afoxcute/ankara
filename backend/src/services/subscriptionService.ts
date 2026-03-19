@@ -108,7 +108,6 @@ export class SubscriptionService {
 
     const services = await prisma.service.findMany({
       where: {
-        isActive: true,
         recipientAddress: {
           equals: addr,
           mode: "insensitive",
@@ -633,6 +632,140 @@ export class SubscriptionService {
     await cacheService.invalidate(CacheKeys.allServices());
 
     return service;
+  }
+
+  /**
+   * Create a service as a specific merchant.
+   * Merchant is identified by `recipientAddress` and is only allowed to create
+   * services where recipientAddress matches the merchant.
+   */
+  async createMerchantService(data: {
+    recipientAddress: string;
+    name: string;
+    description?: string;
+    cost: number;
+    frequency: string;
+  }) {
+    const frequency = String(data.frequency ?? "").toLowerCase();
+    if (!["weekly", "monthly", "yearly"].includes(frequency)) {
+      throw new Error("Invalid frequency. Use weekly, monthly, or yearly.");
+    }
+    if (!data.recipientAddress || String(data.recipientAddress).trim() === "") {
+      throw new Error("recipientAddress is required");
+    }
+    if (!data.name || String(data.name).trim() === "") {
+      throw new Error("name is required");
+    }
+    if (data.cost === undefined || data.cost === null || Number.isNaN(Number(data.cost)) || Number(data.cost) <= 0) {
+      throw new Error("cost must be a positive number");
+    }
+
+    const service = await prisma.service.create({
+      data: {
+        name: data.name.trim(),
+        description: data.description,
+        cost: new Decimal(data.cost),
+        frequency,
+        recipientAddress: String(data.recipientAddress).trim(),
+      },
+    });
+
+    await cacheService.invalidate(CacheKeys.allServices());
+    return {
+      ...service,
+      cost: this.decimalToNumber(service.cost),
+    };
+  }
+
+  /**
+   * Update an existing merchant-owned service metadata.
+   */
+  async updateMerchantService(
+    serviceId: string,
+    merchantRecipientAddress: string,
+    input: {
+      name?: string;
+      description?: string | null;
+      cost?: number;
+      frequency?: string;
+    }
+  ) {
+    const merchantAddr = merchantRecipientAddress.toLowerCase();
+
+    const existing = await prisma.service.findUnique({
+      where: { id: serviceId },
+      select: { id: true, recipientAddress: true },
+    });
+
+    if (!existing) {
+      throw new Error("Service not found");
+    }
+
+    if (existing.recipientAddress.toLowerCase() !== merchantAddr) {
+      throw new Error("You are not allowed to update this service");
+    }
+
+    const updateData: any = {};
+    if (input.name !== undefined) updateData.name = input.name.trim();
+    if (input.description !== undefined) updateData.description = input.description;
+    if (input.cost !== undefined) {
+      if (Number.isNaN(Number(input.cost)) || Number(input.cost) <= 0) {
+        throw new Error("cost must be a positive number");
+      }
+      updateData.cost = new Decimal(input.cost);
+    }
+    if (input.frequency !== undefined) {
+      const f = String(input.frequency).toLowerCase();
+      if (!["weekly", "monthly", "yearly"].includes(f)) {
+        throw new Error("Invalid frequency. Use weekly, monthly, or yearly.");
+      }
+      updateData.frequency = f;
+    }
+
+    const updated = await prisma.service.update({
+      where: { id: serviceId },
+      data: updateData,
+    });
+
+    await cacheService.invalidate(CacheKeys.allServices());
+    return {
+      ...updated,
+      cost: this.decimalToNumber(updated.cost),
+    };
+  }
+
+  /**
+   * Enable/disable a merchant-owned service.
+   */
+  async setMerchantServiceActive(
+    serviceId: string,
+    merchantRecipientAddress: string,
+    isActive: boolean
+  ) {
+    const merchantAddr = merchantRecipientAddress.toLowerCase();
+    const existing = await prisma.service.findUnique({
+      where: { id: serviceId },
+      select: { id: true, recipientAddress: true },
+    });
+
+    if (!existing) {
+      throw new Error("Service not found");
+    }
+
+    if (existing.recipientAddress.toLowerCase() !== merchantAddr) {
+      throw new Error("You are not allowed to update this service");
+    }
+
+    const updated = await prisma.service.update({
+      where: { id: serviceId },
+      data: { isActive },
+    });
+
+    await cacheService.invalidate(CacheKeys.allServices());
+    return {
+      ...updated,
+      cost: this.decimalToNumber(updated.cost),
+    };
   }
 
   /**

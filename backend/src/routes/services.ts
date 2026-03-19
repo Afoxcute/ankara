@@ -33,6 +33,82 @@ router.get('/merchant/:recipientAddress', async (req, res) => {
   }
 });
 
+// Create a new service as the merchant (merchant is identified by recipientAddress)
+router.post('/merchant/:recipientAddress', async (req, res) => {
+  try {
+    const { recipientAddress } = req.params;
+    const { name, description, cost, frequency } = req.body;
+
+    const service = await subscriptionService.createMerchantService({
+      recipientAddress,
+      name,
+      description,
+      cost,
+      frequency,
+    });
+
+    res.status(201).json({ success: true, data: service });
+  } catch (error: any) {
+    console.error('Error creating merchant service:', error);
+    res.status(400).json({
+      success: false,
+      error: error.message || 'Failed to create merchant service',
+    });
+  }
+});
+
+// Update an existing merchant-owned service
+router.put('/merchant/:recipientAddress/:serviceId', async (req, res) => {
+  try {
+    const { recipientAddress, serviceId } = req.params;
+    const { name, description, cost, frequency } = req.body;
+
+    const service = await subscriptionService.updateMerchantService(serviceId, recipientAddress, {
+      name,
+      description,
+      cost,
+      frequency,
+    });
+
+    res.json({ success: true, data: service });
+  } catch (error: any) {
+    console.error('Error updating merchant service:', error);
+    res.status(400).json({
+      success: false,
+      error: error.message || 'Failed to update merchant service',
+    });
+  }
+});
+
+// Enable/disable a merchant-owned service
+router.patch('/merchant/:recipientAddress/:serviceId/active', async (req, res) => {
+  try {
+    const { recipientAddress, serviceId } = req.params;
+    const { isActive } = req.body as { isActive: boolean };
+
+    if (typeof isActive !== 'boolean') {
+      return res.status(400).json({
+        success: false,
+        error: 'isActive must be boolean',
+      });
+    }
+
+    const service = await subscriptionService.setMerchantServiceActive(
+      serviceId,
+      recipientAddress,
+      isActive
+    );
+
+    res.json({ success: true, data: service });
+  } catch (error: any) {
+    console.error('Error toggling merchant service active:', error);
+    res.status(400).json({
+      success: false,
+      error: error.message || 'Failed to toggle merchant service active',
+    });
+  }
+});
+
 // Create a new service
 router.post('/', async (req, res) => {
   try {

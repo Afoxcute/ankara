@@ -39,7 +39,6 @@ export default function SubscriptionManager({
   /** Single object so "subscribe to catalog" never opens with stale/null service (avoids wrong form mode). */
   const [createForm, setCreateForm] = useState<
     | { open: false }
-    | { open: true; mode: "create" }
     | { open: true; mode: "subscribe"; service: Service }
   >({ open: false });
   const [editingSubscription, setEditingSubscription] = useState<Subscription | null>(null);
@@ -377,13 +376,6 @@ export default function SubscriptionManager({
       <div className="subscription-actions">
         <button
           className="btn btn-primary"
-          onClick={() => setCreateForm({ open: true, mode: "create" })}
-          disabled={loading}
-        >
-          ➕ Create New Service
-        </button>
-        <button
-          className="btn btn-primary"
           onClick={checkAndPaySubscriptions}
           disabled={loading || !account}
         >
@@ -435,32 +427,24 @@ export default function SubscriptionManager({
         </div>
       )}
 
-      {/* Create Service Form */}
+      {/* Subscribe Form */}
       {createForm.open && (
         <CreateServiceForm
-          key={
-            createForm.mode === "subscribe"
-              ? `subscribe-${createForm.service.id}`
-              : "create-new-service"
-          }
+          key={`subscribe-${createForm.service.id}`}
           initialData={
-            createForm.mode === "subscribe"
-              ? {
-                  service: createForm.service.name,
-                  cost:
-                    typeof createForm.service.cost === "number"
-                      ? createForm.service.cost
-                      : Number(createForm.service.cost),
-                  frequency: createForm.service.frequency as
-                    | "monthly"
-                    | "weekly"
-                    | "yearly",
-                  recipientAddress: createForm.service.recipientAddress,
-                  autoPay: true,
-                  serviceId: createForm.service.id,
-                }
-              : undefined
+            {
+              service: createForm.service.name,
+              cost:
+                typeof createForm.service.cost === "number"
+                  ? createForm.service.cost
+                  : Number(createForm.service.cost),
+              frequency: createForm.service.frequency as "monthly" | "weekly" | "yearly",
+              recipientAddress: createForm.service.recipientAddress,
+              autoPay: true,
+              serviceId: createForm.service.id,
+            }
           }
+          context="subscription"
           onSubmit={async (serviceData) => {
             if (!account?.address) {
               onError?.('Connect your wallet to create a subscription');
@@ -522,7 +506,7 @@ export default function SubscriptionManager({
         />
       )}
 
-      {/* Edit Service Form */}
+      {/* Edit Subscription Form */}
       {editingSubscription && (
         <CreateServiceForm
           initialData={{
@@ -532,6 +516,7 @@ export default function SubscriptionManager({
             recipientAddress: editingSubscription.recipientAddress,
             autoPay: editingSubscription.autoPay,
           }}
+          context="subscription"
           onSubmit={handleUpdateSubscription}
           onCancel={() => setEditingSubscription(null)}
           loading={loading}

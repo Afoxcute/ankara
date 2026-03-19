@@ -20,6 +20,11 @@ interface CreateServiceFormProps {
   onCancel: () => void;
   loading?: boolean;
   initialData?: ServiceFormData & { serviceId?: string }; // For editing or subscribing to existing service
+  /**
+   * UI context: this form is reused for "subscribe" and for editing a user's subscription.
+   * We use this to avoid showing "service management" wording in the user dashboard.
+   */
+  context?: "subscription" | "service";
 }
 
 export default function CreateServiceForm({
@@ -27,6 +32,7 @@ export default function CreateServiceForm({
   onCancel,
   loading,
   initialData,
+  context = "service",
 }: CreateServiceFormProps) {
   const account = useActiveAccount();
   const isEditMode = !!initialData && !(initialData as { serviceId?: string }).serviceId;
@@ -44,8 +50,11 @@ export default function CreateServiceForm({
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
 
-    if (!serviceName.trim()) {
-      newErrors.serviceName = 'Service name is required';
+    // When editing a subscription, the service name is informational and not editable.
+    if (!(context === "subscription" && isEditMode)) {
+      if (!serviceName.trim()) {
+        newErrors.serviceName = 'Service name is required';
+      }
     }
 
     const costValue = parseFloat(cost);
@@ -92,7 +101,17 @@ export default function CreateServiceForm({
     <div className="create-service-form-overlay">
       <div className="create-service-form card">
         <div className="form-header">
-          <h2>{isEditMode ? '✏️ Edit Service' : existingServiceId ? '📌 Subscribe to Service' : '➕ Create New Service'}</h2>
+          <h2>
+            {isSubscribeToExisting
+              ? "📌 Subscribe to Service"
+              : isEditMode
+                ? context === "subscription"
+                  ? "✏️ Edit Subscription"
+                  : "✏️ Edit Service"
+                : context === "subscription"
+                  ? "➕ Create Subscription"
+                  : "➕ Create New Service"}
+          </h2>
           <button
             type="button"
             className="btn-close"
@@ -117,7 +136,7 @@ export default function CreateServiceForm({
                 setErrors(prev => ({ ...prev, serviceName: '' }));
               }}
               placeholder="e.g., Netflix-Web3, Spotify-Crypto, Cloud-Storage"
-              disabled={loading || isSubscribeToExisting}
+              disabled={loading || isSubscribeToExisting || (context === "subscription" && isEditMode)}
               title={isSubscribeToExisting ? 'Terms come from the published service' : undefined}
             />
             {errors.serviceName && (
@@ -171,6 +190,11 @@ export default function CreateServiceForm({
                 <>
                   <strong>Subscribing to a listed service</strong> — amount, schedule, and recipient are set by the
                   provider. You&apos;ll register on-chain and start your own subscription.
+                </>
+              ) : context === "subscription" && isEditMode ? (
+                <>
+                  <strong>Update your subscription</strong> — adjust billing settings like cost override, frequency,
+                  recipient, and auto-pay. The service listing itself is managed by the merchant.
                 </>
               ) : (
                 <>
@@ -265,15 +289,21 @@ export default function CreateServiceForm({
             >
               {loading
                 ? isEditMode
-                  ? 'Updating...'
+                  ? context === "subscription"
+                    ? "Updating subscription..."
+                    : "Updating..."
                   : isSubscribeToExisting
                     ? 'Subscribing...'
                     : 'Creating...'
                 : isEditMode
-                  ? 'Update Service'
+                  ? context === "subscription"
+                    ? "Update Subscription"
+                    : "Update Service"
                   : isSubscribeToExisting
-                    ? 'Subscribe'
-                    : 'Create Service'}
+                    ? "Subscribe"
+                    : context === "subscription"
+                      ? "Create Subscription"
+                      : "Create Service"}
             </button>
           </div>
         </form>

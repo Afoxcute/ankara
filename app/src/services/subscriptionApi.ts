@@ -139,6 +139,54 @@ export const subscriptionApi = {
   },
 
   /**
+   * Create a new merchant-owned service.
+   */
+  async createMerchantService(
+    recipientAddress: string,
+    input: {
+      name: string;
+      description?: string;
+      cost: number;
+      frequency: string;
+    }
+  ): Promise<Service> {
+    const response = await api.post(`/services/merchant/${recipientAddress}`, input);
+    return response.data.data;
+  },
+
+  /**
+   * Update a merchant-owned service.
+   */
+  async updateMerchantService(
+    recipientAddress: string,
+    serviceId: string,
+    input: {
+      name?: string;
+      description?: string | null;
+      cost?: number;
+      frequency?: string;
+    }
+  ): Promise<Service> {
+    const response = await api.put(`/services/merchant/${recipientAddress}/${serviceId}`, input);
+    return response.data.data;
+  },
+
+  /**
+   * Enable/disable a merchant-owned service.
+   */
+  async setMerchantServiceActive(
+    recipientAddress: string,
+    serviceId: string,
+    isActive: boolean
+  ): Promise<Service> {
+    const response = await api.patch(
+      `/services/merchant/${recipientAddress}/${serviceId}/active`,
+      { isActive }
+    );
+    return response.data.data;
+  },
+
+  /**
    * Get a single subscription by ID
    */
   async getSubscription(id: string): Promise<Subscription> {
