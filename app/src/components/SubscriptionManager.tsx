@@ -8,8 +8,6 @@ import { useConfidentialSubscription } from "../hooks/useConfidentialSubscriptio
 import {
   SUBSCRIPTION_CONTRACT_ADDRESS,
   CONFIDENTIAL_SUBSCRIPTION_CONTRACT_ADDRESS,
-  USDC_SUBSCRIPTION_CONTRACT_ADDRESS,
-  USDt_SUBSCRIPTION_CONTRACT_ADDRESS,
 } from "../contracts/config";
 import SubscriptionCard from "./SubscriptionCard";
 import AISuggestions from "./AISuggestions";
@@ -31,8 +29,8 @@ export default function SubscriptionManager({
   onError,
 }: SubscriptionManagerProps) {
   const account = useActiveAccount();
-  const { subscribe: contractSubscribe, subscribeErc20, cancel: contractCancel, cancelErc20, isPending: contractPending } = useSubscriptionContract(client);
-  const { payWithApproval, payErc20WithApproval, isPending: payPending } = useSubscriptionContractPay(client);
+  const { subscribe: contractSubscribe, cancel: contractCancel, isPending: contractPending } = useSubscriptionContract(client);
+  const { payWithApproval, isPending: payPending } = useSubscriptionContractPay(client);
   const { subscribe: confidentialSubscribe, isPending: confidentialPending } = useConfidentialSubscription();
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
   const [suggestions, setSuggestions] = useState<AISuggestion[]>([]);
@@ -140,18 +138,7 @@ export default function SubscriptionManager({
       let successCount = 0;
       for (const sub of dueSubs) {
         try {
-          if (sub.paymentToken === 'USDC_ONCHAIN' || sub.paymentToken === 'USDt_ONCHAIN') {
-            if (sub.onChainSubscriptionId) {
-              await payErc20WithApproval(
-                sub.paymentToken,
-                sub.onChainSubscriptionId,
-                sub.cost,
-                sub.id,
-                account.address
-              );
-              successCount++;
-            }
-          } else if (sub.onChainSubscriptionId) {
+          if (sub.onChainSubscriptionId) {
             await payWithApproval(sub.onChainSubscriptionId, sub.cost, sub.id);
             successCount++;
           } else {
@@ -180,11 +167,7 @@ export default function SubscriptionManager({
   const handleCancelSubscription = async (subscription: Subscription) => {
     const id = subscription.id;
     try {
-      if (subscription.paymentToken === 'USDC_ONCHAIN' || subscription.paymentToken === 'USDt_ONCHAIN') {
-        if (subscription.onChainSubscriptionId) {
-          await cancelErc20(subscription.paymentToken, subscription.onChainSubscriptionId);
-        }
-      } else if (subscription.onChainSubscriptionId) {
+      if (subscription.onChainSubscriptionId) {
         await contractCancel(subscription.onChainSubscriptionId);
       }
       if (await subscriptionAgent.removeSubscription(id)) {
@@ -218,14 +201,13 @@ export default function SubscriptionManager({
     frequency: 'monthly' | 'weekly' | 'yearly';
     recipientAddress: string;
     autoPay: boolean;
-    paymentToken: 'PAS' | 'PAS_X402' | 'USDC' | 'USDt' | 'USDC_ONCHAIN' | 'USDt_ONCHAIN';
+    paymentToken: 'PAS' | 'PAS_X402';
     isPrivate?: boolean;
   }) => {
     if (!editingSubscription) return;
 
     try {
       setLoading(true);
-      // For now, payment token changes are only supported for off-chain (x402) subscriptions.
       const updates: any = {
         service: serviceData.service,
         cost: serviceData.cost,
@@ -235,20 +217,15 @@ export default function SubscriptionManager({
       };
 
       if (!editingSubscription.onChainSubscriptionId) {
-        if (serviceData.paymentToken === 'PAS' || serviceData.paymentToken === 'USDC_ONCHAIN' || serviceData.paymentToken === 'USDt_ONCHAIN') {
-          onError?.('Switching to on-chain (PAS/USDC/USDt) requires creating a new subscription.');
+        if (serviceData.paymentToken === 'PAS') {
+          onError?.('Switching to on-chain PAS requires creating a new subscription.');
           return;
         }
-        updates.usageData = {
-          stablecoin: serviceData.paymentToken === 'PAS_X402' ? 'PAS' : serviceData.paymentToken,
-        };
+        // Off-chain PAS x402 subscription.
+        updates.usageData = { stablecoin: 'PAS' };
       } else {
-        if (editingSubscription.paymentToken === 'PAS' && serviceData.paymentToken !== 'PAS') {
-          onError?.('On-chain PAS subscriptions cannot be switched to another payment asset.');
-          return;
-        }
-        if ((editingSubscription.paymentToken === 'USDC_ONCHAIN' || editingSubscription.paymentToken === 'USDt_ONCHAIN') && serviceData.paymentToken !== editingSubscription.paymentToken) {
-          onError?.('On-chain stablecoin subscriptions cannot be switched to another payment asset.');
+        if (serviceData.paymentToken !== 'PAS') {
+          onError?.('On-chain PAS subscriptions cannot be switched to off-chain payments.');
           return;
         }
       }
@@ -280,11 +257,7 @@ export default function SubscriptionManager({
     const assetLabel =
       subscription.paymentToken === 'PAS' || subscription.paymentToken === 'PAS_X402'
         ? 'PAS'
-        : subscription.paymentToken === 'USDC_ONCHAIN'
-          ? 'USDC'
-          : subscription.paymentToken === 'USDt_ONCHAIN'
-            ? 'USDt'
-            : subscription.paymentToken;
+        : 'PAS';
 
     try {
       setLoading(true);
@@ -292,18 +265,7 @@ export default function SubscriptionManager({
         `Processing payment of ${subscription.cost.toFixed(4)} ${assetLabel} to ${subscription.service}...`
       );
 
-      if (subscription.paymentToken === 'USDC_ONCHAIN' || subscription.paymentToken === 'USDt_ONCHAIN') {
-        const { txHash } = await payErc20WithApproval(
-          subscription.paymentToken,
-          subscription.onChainSubscriptionId!,
-          subscription.cost,
-          subscription.id,
-          account.address
-        );
-        onSuccess?.(
-          `✅ Paid ${subscription.cost.toFixed(4)} ${assetLabel}. Tx: ${txHash.slice(0, 10)}...`
-        );
-      } else if (subscription.onChainSubscriptionId) {
+      if (subscription.onChainSubscriptionId) {
         const { txHash } = await payWithApproval(
           subscription.onChainSubscriptionId,
           subscription.cost,
@@ -353,12 +315,6 @@ export default function SubscriptionManager({
     .filter(sub => sub.isActive)
     .reduce(
       (acc, sub) => {
-        const assetGroup =
-          sub.paymentToken === 'PAS_X402' ? 'PAS'
-            : sub.paymentToken === 'USDC_ONCHAIN' || sub.paymentToken === 'USDC' ? 'USDC'
-            : sub.paymentToken === 'USDt_ONCHAIN' || sub.paymentToken === 'USDt' ? 'USDt'
-            : 'PAS';
-
         const monthlyEquivalent =
           sub.frequency === 'monthly'
             ? sub.cost
@@ -368,10 +324,10 @@ export default function SubscriptionManager({
                 ? sub.cost / 12
                 : sub.cost;
 
-        acc[assetGroup] += monthlyEquivalent;
+        acc.PAS += monthlyEquivalent;
         return acc;
       },
-      { PAS: 0, USDC: 0, USDt: 0 } as Record<'PAS' | 'USDC' | 'USDt', number>
+      { PAS: 0 }
     );
 
   const activeSubscriptions = subscriptions.filter(sub => sub.isActive);
@@ -391,7 +347,7 @@ export default function SubscriptionManager({
         <div className="stat-card">
           <div className="stat-label">Monthly Cost</div>
           <div className="stat-value">
-            {monthlyCostsByToken.PAS.toFixed(4)} PAS · {monthlyCostsByToken.USDC.toFixed(4)} USDC · {monthlyCostsByToken.USDt.toFixed(4)} USDt
+            {monthlyCostsByToken.PAS.toFixed(4)} PAS
           </div>
         </div>
         <div className="stat-card">
@@ -509,32 +465,7 @@ export default function SubscriptionManager({
               setLoading(true);
               setSubscribeToService(null);
 
-              if (serviceData.paymentToken === 'USDC_ONCHAIN' || serviceData.paymentToken === 'USDt_ONCHAIN') {
-                onSuccess?.('Creating subscription on-chain (USDC/USDt)...');
-                const { subscriptionId: onChainId, txHash } = await subscribeErc20(
-                  serviceData.paymentToken,
-                  serviceData.recipientAddress,
-                  serviceData.cost,
-                  serviceData.frequency
-                );
-                const erc20ContractAddr =
-                  serviceData.paymentToken === 'USDC_ONCHAIN'
-                    ? USDC_SUBSCRIPTION_CONTRACT_ADDRESS
-                    : USDt_SUBSCRIPTION_CONTRACT_ADDRESS;
-                await subscriptionApi.createSubscription({
-                  ...(serviceData.serviceId
-                    ? { serviceId: serviceData.serviceId }
-                    : { serviceName: serviceData.service }),
-                  cost: serviceData.cost,
-                  frequency: serviceData.frequency,
-                  recipientAddress: serviceData.recipientAddress,
-                  userAddress: account.address,
-                  autoPay: serviceData.autoPay,
-                  onChainSubscriptionId: onChainId,
-                  onChainContractAddress: erc20ContractAddr || undefined,
-                });
-                onSuccess?.(`Subscription created on-chain (${serviceData.paymentToken === 'USDC_ONCHAIN' ? 'USDC' : 'USDt'}). Tx: ${txHash.slice(0, 10)}...`);
-              } else if (serviceData.paymentToken === 'PAS') {
+              if (serviceData.paymentToken === 'PAS') {
                 onSuccess?.('Creating subscription on-chain...');
                 const isPrivate =
                   !!serviceData.isPrivate &&
@@ -578,10 +509,10 @@ export default function SubscriptionManager({
                   userAddress: account.address,
                   autoPay: serviceData.autoPay,
                   usageData: {
-                    stablecoin: serviceData.paymentToken === 'PAS_X402' ? 'PAS' : serviceData.paymentToken,
+                    stablecoin: 'PAS',
                   },
                 });
-                onSuccess?.(`Subscription created for ${serviceData.paymentToken} (off-chain x402).`);
+                onSuccess?.(`Subscription created (off-chain x402 PAS).`);
               }
               setShowCreateForm(false);
               await loadSubscriptions();

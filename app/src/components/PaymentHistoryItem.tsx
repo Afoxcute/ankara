@@ -5,7 +5,7 @@ import './PaymentHistoryItem.css';
 interface PaymentHistoryItemProps {
   payment: Payment;
   serviceName: string;
-  paymentAsset: 'PAS' | 'PAS_X402' | 'USDC' | 'USDt' | 'USDC_ONCHAIN' | 'USDt_ONCHAIN';
+  paymentAsset: 'PAS' | 'PAS_X402';
 }
 
 export default function PaymentHistoryItem({
@@ -60,10 +60,7 @@ export default function PaymentHistoryItem({
 
   const dateInfo = formatDate(payment.timestamp);
   const assetLabel =
-    paymentAsset === 'PAS' || paymentAsset === 'PAS_X402' ? 'PAS'
-      : paymentAsset === 'USDC_ONCHAIN' || paymentAsset === 'USDC' ? 'USDC'
-      : paymentAsset === 'USDt_ONCHAIN' || paymentAsset === 'USDt' ? 'USDt'
-      : paymentAsset;
+    paymentAsset === 'PAS' || paymentAsset === 'PAS_X402' ? 'PAS' : 'PAS';
 
   return (
     <div className={`payment-history-item ${isExpanded ? 'expanded' : ''}`}>

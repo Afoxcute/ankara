@@ -12,10 +12,9 @@ export interface ServiceFormData {
   /**
    * How payments are executed:
    * - `PAS`: on-chain SubscriptionManagerFLOW (native PAS).
-   * - `USDC_ONCHAIN`/`USDt_ONCHAIN`: on-chain ERC20 SubscriptionManager (Polkadot Hub USDC/USDt asset IDs).
-   * - `PAS_X402`/`USDC`/`USDt`: off-chain x402 payments.
+   * - `PAS_X402`: off-chain x402 payments (PAS).
    */
-  paymentToken: 'PAS' | 'PAS_X402' | 'USDC' | 'USDt' | 'USDC_ONCHAIN' | 'USDt_ONCHAIN';
+  paymentToken: 'PAS' | 'PAS_X402';
   /** When true, create a confidential (FHE) subscription on Sepolia. */
   isPrivate?: boolean;
   /** When set, subscribe to this existing service (API uses it instead of creating a new one). */
@@ -44,7 +43,7 @@ export default function CreateServiceForm({
   const [recipientAddress, setRecipientAddress] = useState(initialData?.recipientAddress || account?.address || '');
   const [autoPay, setAutoPay] = useState(initialData?.autoPay ?? true);
   const [paymentToken, setPaymentToken] = useState<
-    'PAS' | 'PAS_X402' | 'USDC' | 'USDt' | 'USDC_ONCHAIN' | 'USDt_ONCHAIN'
+    'PAS' | 'PAS_X402'
   >(initialData?.paymentToken ?? 'PAS');
   const [isPrivate, setIsPrivate] = useState(initialData?.isPrivate ?? false);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -136,7 +135,7 @@ export default function CreateServiceForm({
           <div className="form-group-row">
             <div className="form-group">
               <label className="form-label">
-                Cost ({paymentToken === 'PAS' ? (isPrivate ? "ETH" : "PAS") : paymentToken === 'PAS_X402' ? "PAS" : paymentToken === 'USDC_ONCHAIN' ? "USDC" : paymentToken === 'USDt_ONCHAIN' ? "USDt" : paymentToken}) <span className="required">*</span>
+                Cost ({paymentToken === 'PAS' ? (isPrivate ? "ETH" : "PAS") : "PAS"}) <span className="required">*</span>
               </label>
               <input
                 type="number"
@@ -181,18 +180,14 @@ export default function CreateServiceForm({
                 className="form-select"
                 value={paymentToken}
                 onChange={(e) => {
-                  const next = e.target.value as 'PAS' | 'PAS_X402' | 'USDC' | 'USDt' | 'USDC_ONCHAIN' | 'USDt_ONCHAIN';
+                  const next = e.target.value as 'PAS' | 'PAS_X402';
                   setPaymentToken(next);
                   if (next !== 'PAS') setIsPrivate(false);
                 }}
                 disabled={loading}
               >
                 <option value="PAS">Native PAS (on-chain)</option>
-              <option value="USDC_ONCHAIN">USDC (on-chain, Polkadot Hub)</option>
-              <option value="USDt_ONCHAIN">USDt (on-chain, Polkadot Hub)</option>
-              <option value="PAS_X402">PAS (x402, off-chain)</option>
-              <option value="USDC">USDC (x402, off-chain)</option>
-              <option value="USDt">USDt (x402, off-chain)</option>
+                <option value="PAS_X402">PAS (x402, off-chain)</option>
               </select>
             </div>
 

@@ -9,48 +9,20 @@ import {
   readContract,
   type ThirdwebClient,
 } from "thirdweb";
-import { ethers } from "ethers";
 import {
   useSendTransaction,
   useSendAndConfirmTransaction,
 } from "thirdweb/react";
-import { POLKADOT_HUB_TESTNET, USDC_TESTNET, USDT_TESTNET } from "../services/x402PaymentService";
+import { POLKADOT_HUB_TESTNET } from "../services/x402PaymentService";
 import {
   SUBSCRIPTION_CONTRACT_ADDRESS,
-  USDC_SUBSCRIPTION_CONTRACT_ADDRESS,
-  USDt_SUBSCRIPTION_CONTRACT_ADDRESS,
 } from "../contracts/config";
-import { SUBSCRIPTION_ABI_FLOW, SUBSCRIPTION_ABI_ERC20 } from "../contracts/subscriptionContract";
+import { SUBSCRIPTION_ABI_FLOW } from "../contracts/subscriptionContract";
 import { subscriptionApi } from "../services/subscriptionApi";
 import { parseUnits, encodeEventTopics } from "viem";
 
 /** PAS uses 18 decimals (wei). */
 const PAS_DECIMALS = 18;
-
-const STABLECOIN_DECIMALS = 6;
-
-const ERC20_APPROVE_ABI = [
-  {
-    inputs: [
-      { name: "spender", type: "address" },
-      { name: "value", type: "uint256" },
-    ],
-    name: "approve",
-    outputs: [{ name: "", type: "bool" }],
-    stateMutability: "nonpayable",
-    type: "function",
-  },
-  {
-    inputs: [
-      { name: "owner", type: "address" },
-      { name: "spender", type: "address" },
-    ],
-    name: "allowance",
-    outputs: [{ name: "", type: "uint256" }],
-    stateMutability: "view",
-    type: "function",
-  },
-] as const;
 
 const SUBSCRIPTION_CREATED_ABI = [
   {
@@ -83,23 +55,6 @@ export function getSubscriptionManagerContract(client: ThirdwebClient) {
     chain: POLKADOT_HUB_TESTNET,
     address: SUBSCRIPTION_CONTRACT_ADDRESS as `0x${string}`,
     abi: SUBSCRIPTION_ABI_FLOW,
-  });
-}
-
-export function getSubscriptionManagerContractErc20(
-  client: ThirdwebClient,
-  contractAddress: string
-) {
-  if (!contractAddress) {
-    throw new Error(
-      "Missing ERC20 SubscriptionManager contract address. Set VITE_USDC_SUBSCRIPTION_CONTRACT_ADDRESS / VITE_USDT_SUBSCRIPTION_CONTRACT_ADDRESS."
-    );
-  }
-  return getContract({
-    client,
-    chain: POLKADOT_HUB_TESTNET,
-    address: contractAddress as `0x${string}`,
-    abi: SUBSCRIPTION_ABI_ERC20,
   });
 }
 
@@ -174,67 +129,6 @@ export function useSubscriptionContract(client: ThirdwebClient) {
     [contract, sendAndConfirm]
   );
 
-  const subscribeErc20 = useCallback(
-    async (
-      paymentToken: "USDC_ONCHAIN" | "USDt_ONCHAIN",
-      recipient: string,
-      amountHuman: number,
-      frequency: "weekly" | "monthly" | "yearly"
-    ): Promise<{ subscriptionId: string; txHash: string }> => {
-      const addr =
-        paymentToken === "USDC_ONCHAIN"
-          ? USDC_SUBSCRIPTION_CONTRACT_ADDRESS
-          : USDt_SUBSCRIPTION_CONTRACT_ADDRESS;
-      if (!addr) {
-        throw new Error(
-          `ERC20 SubscriptionManager not configured for ${paymentToken}. Set VITE_USDC_SUBSCRIPTION_CONTRACT_ADDRESS / VITE_USDT_SUBSCRIPTION_CONTRACT_ADDRESS.`
-        );
-      }
-
-      if (typeof window === "undefined") {
-        throw new Error("Wallet provider is not available in this environment.");
-      }
-      const ethereum = (window as any).ethereum;
-      if (!ethereum) throw new Error("No wallet (e.g. MetaMask) found.");
-
-      const provider = new ethers.BrowserProvider(ethereum);
-      const signer = await provider.getSigner();
-
-      // Attempt chain switch so tx doesn't fail due to wrong network.
-      const { chainId } = await provider.getNetwork();
-      if (Number(chainId) !== POLKADOT_HUB_TESTNET.id) {
-        const chainHex = ethers.toBeHex(POLKADOT_HUB_TESTNET.id);
-        await ethereum.request({
-          method: "wallet_switchEthereumChain",
-          params: [{ chainId: chainHex }],
-        });
-      }
-
-      const erc20Manager = new ethers.Contract(
-        addr,
-        SUBSCRIPTION_ABI_ERC20 as any,
-        signer
-      );
-
-      const amountWei = parseUnits(amountHuman.toString(), STABLECOIN_DECIMALS);
-
-      const tx = await erc20Manager.subscribe(
-        recipient as `0x${string}`,
-        amountWei,
-        frequencyToEnum(frequency)
-      );
-
-      setLastTxHash(tx.hash);
-      const receipt = await tx.wait();
-      const rec = {
-        logs: receipt.logs?.map((l: any) => ({ topics: l.topics })) ?? [],
-      };
-      const subscriptionId = parseSubscriptionIdFromReceipt(rec);
-      return { subscriptionId, txHash: tx.hash };
-    },
-    [client, sendAndConfirm]
-  );
-
   const pay = useCallback(
     (subscriptionId: string, valueWei?: bigint): Promise<string> => {
       const tx = prepareContractCall({
@@ -276,54 +170,10 @@ export function useSubscriptionContract(client: ThirdwebClient) {
     [contract, sendTx]
   );
 
-  const cancelErc20 = useCallback(
-    (paymentToken: "USDC_ONCHAIN" | "USDt_ONCHAIN", subscriptionId: string): Promise<string> => {
-      return (async () => {
-        const addr =
-          paymentToken === "USDC_ONCHAIN"
-            ? USDC_SUBSCRIPTION_CONTRACT_ADDRESS
-            : USDt_SUBSCRIPTION_CONTRACT_ADDRESS;
-        if (!addr) throw new Error(`ERC20 contract not configured for ${paymentToken}`);
-
-        if (typeof window === "undefined") {
-          throw new Error("Wallet provider is not available in this environment.");
-        }
-        const ethereum = (window as any).ethereum;
-        if (!ethereum) throw new Error("No wallet (e.g. MetaMask) found.");
-
-        const provider = new ethers.BrowserProvider(ethereum);
-        const signer = await provider.getSigner();
-
-        const { chainId } = await provider.getNetwork();
-        if (Number(chainId) !== POLKADOT_HUB_TESTNET.id) {
-          const chainHex = ethers.toBeHex(POLKADOT_HUB_TESTNET.id);
-          await ethereum.request({
-            method: "wallet_switchEthereumChain",
-            params: [{ chainId: chainHex }],
-          });
-        }
-
-        const erc20Manager = new ethers.Contract(
-          addr,
-          SUBSCRIPTION_ABI_ERC20 as any,
-          signer
-        );
-
-        const tx = await erc20Manager.cancel(BigInt(subscriptionId));
-        setLastTxHash(tx.hash);
-        await tx.wait();
-        return tx.hash;
-      })();
-    },
-    [client, sendTx]
-  );
-
   return {
     subscribe,
-    subscribeErc20,
     pay,
     cancel,
-    cancelErc20,
     isPending: isSendPending,
     lastTxHash,
   };
@@ -371,98 +221,5 @@ export function useSubscriptionContractPay(client: ThirdwebClient) {
     [pasContract, pay]
   );
 
-  /** Pay with ERC20 stablecoin (USDC/USDt) on-chain: approve then pay. */
-  const payErc20WithApproval = useCallback(
-    async (
-      paymentToken: "USDC_ONCHAIN" | "USDt_ONCHAIN",
-      onChainSubscriptionId: string,
-      amountTokenHuman: number,
-      subscriptionIdBackend: string,
-      subscriberAddress: string
-    ): Promise<{ txHash: string }> => {
-      const erc20ManagerAddress =
-        paymentToken === "USDC_ONCHAIN"
-          ? USDC_SUBSCRIPTION_CONTRACT_ADDRESS
-          : USDt_SUBSCRIPTION_CONTRACT_ADDRESS;
-
-      if (!erc20ManagerAddress) {
-        throw new Error(
-          `ERC20 SubscriptionManager not configured for ${paymentToken}. Set VITE_USDC_SUBSCRIPTION_CONTRACT_ADDRESS and/or VITE_USDT_SUBSCRIPTION_CONTRACT_ADDRESS.`
-        );
-      }
-
-      if (typeof window === "undefined") {
-        throw new Error("Wallet provider is not available in this environment.");
-      }
-
-      const ethereum = (window as any).ethereum;
-      if (!ethereum) throw new Error("No wallet (e.g. MetaMask) found.");
-
-      const provider = new ethers.BrowserProvider(ethereum);
-      const signer = await provider.getSigner();
-
-      // Attempt chain switch so tx doesn't fail due to wrong network.
-      const { chainId } = await provider.getNetwork();
-      if (Number(chainId) !== POLKADOT_HUB_TESTNET.id) {
-        const chainHex = ethers.toBeHex(POLKADOT_HUB_TESTNET.id);
-        await ethereum.request({
-          method: "wallet_switchEthereumChain",
-          params: [{ chainId: chainHex }],
-        });
-      }
-
-      const erc20Manager = new ethers.Contract(
-        erc20ManagerAddress,
-        SUBSCRIPTION_ABI_ERC20 as any,
-        signer
-      );
-
-      const isDue = await erc20Manager.isPaymentDue(BigInt(onChainSubscriptionId));
-      if (!isDue) {
-        const sub = await erc20Manager.getSubscription(BigInt(onChainSubscriptionId));
-        const nextDueAt = (sub as any).nextDueAt ?? sub[5];
-        const nextDueAtNum = typeof nextDueAt === "bigint" ? Number(nextDueAt) : Number(nextDueAt);
-        const dateStr = new Date(nextDueAtNum * 1000).toLocaleString();
-        throw new Error(
-          `Payment not due yet on-chain. Next due: ${dateStr}. You can pay again then.`
-        );
-      }
-
-      const amountWei = parseUnits(amountTokenHuman.toString(), STABLECOIN_DECIMALS);
-      const tokenAddress = paymentToken === "USDC_ONCHAIN" ? USDC_TESTNET : USDT_TESTNET;
-
-      const tokenContract = new ethers.Contract(
-        tokenAddress,
-        ERC20_APPROVE_ABI as any,
-        signer
-      );
-
-      const allowanceAmount: bigint = await tokenContract.allowance(
-        subscriberAddress,
-        erc20ManagerAddress
-      );
-
-      if (allowanceAmount < amountWei) {
-        const approveTx = await tokenContract.approve(erc20ManagerAddress, amountWei);
-        await approveTx.wait();
-      }
-
-      const payTx = await erc20Manager.pay(BigInt(onChainSubscriptionId));
-      const txHash = payTx.hash;
-      await payTx.wait();
-
-      await subscriptionApi.recordPayment(
-        subscriptionIdBackend,
-        amountTokenHuman,
-        txHash,
-        "polkadot-testnet",
-        "completed"
-      );
-
-      return { txHash };
-    },
-    [client]
-  );
-
-  return { payWithApproval, payErc20WithApproval, pay, isPending: contractPending };
+  return { payWithApproval, pay, isPending: contractPending };
 }

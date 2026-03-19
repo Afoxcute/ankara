@@ -13,14 +13,6 @@ export const SUBSCRIPTION_CONTRACT_ADDRESS: string =
     ? (import.meta.env.VITE_SUBSCRIPTION_CONTRACT_ADDRESS as string)
     : "0xb2AC0Db5788B222c417F9C1353C5574bC8106C77";
 
-// ERC20 SubscriptionManager contracts (USDC/USDt payments).
-// These must be deployed separately (one contract per paymentToken in the constructor).
-export const USDC_SUBSCRIPTION_CONTRACT_ADDRESS = import.meta.env
-  .VITE_USDC_SUBSCRIPTION_CONTRACT_ADDRESS as string | undefined;
-
-export const USDt_SUBSCRIPTION_CONTRACT_ADDRESS = import.meta.env
-  .VITE_USDT_SUBSCRIPTION_CONTRACT_ADDRESS as string | undefined;
-
 /** Polkadot Hub TestNet */
 export const POLKADOT_TESTNET_CHAIN_ID = 420420417;
 export const POLKADOT_TESTNET_RPC = "https://eth-rpc-testnet.polkadot.io";

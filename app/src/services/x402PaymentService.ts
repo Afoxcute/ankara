@@ -26,13 +26,6 @@ export const POLKADOT_HUB_TESTNET = {
   }],
 };
 
-// Polkadot Hub native stablecoin ERC20 precompile addresses (derived from Assets pallet IDs).
-// These precompiles implement standard ERC20 but NOT metadata (name/symbol/decimals).
-export const USDC_TESTNET = '0x0000053900000000000000000000000001200000'; // Asset ID 1337
-export const USDT_TESTNET = '0x000007C000000000000000000000000001200000'; // Asset ID 1984
-export const USDC_MAINNET = '0x0000053900000000000000000000000001200000';
-export const USDT_MAINNET = '0x000007C000000000000000000000000001200000';
-
 // PAS (Paseo) ERC20-precompile address for x402 payments.
 // For Polkadot Hub reviving, the native token PAS is exposed as an ERC20 precompile
 // with asset id = 0, encoded into the first 4 bytes of the precompile address.
@@ -50,8 +43,6 @@ export const PAS_DECIMALS =
 
 // Off-chain metadata for precompile tokens (the precompile does not expose name/symbol/decimals)
 export const STABLECOIN_METADATA: Record<string, { name: string; symbol: string; decimals: number }> = {
-  [USDC_TESTNET.toLowerCase()]: { name: 'USD Coin', symbol: 'USDC', decimals: 6 },
-  [USDT_TESTNET.toLowerCase()]: { name: 'Tether USD', symbol: 'USDt', decimals: 6 },
   [PAS_TESTNET.toLowerCase()]: {
     name: String(import.meta.env?.VITE_PAS_X402_DOMAIN_NAME || 'PAS'),
     symbol: 'PAS',
@@ -62,9 +53,9 @@ export const STABLECOIN_METADATA: Record<string, { name: string; symbol: string;
 // Facilitator URL (set VITE_FACILITATOR_URL in .env for payment settlement)
 export const FACILITATOR_URL = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_FACILITATOR_URL) || '';
 
-// EIP-712 Domain for USDC (default - actual domain is queried from contract)
+// EIP-712 Domain default (actual domain is queried from contract when possible)
 export const TOKEN_DOMAIN = {
-  name: "USD Coin",
+  name: "PAS",
   version: "1",
 };
 
@@ -157,7 +148,7 @@ export class X402PaymentService {
     // so check the local metadata map first before hitting the RPC.
     const known = STABLECOIN_METADATA[asset.toLowerCase()];
     if (known) {
-      console.log(`Using known stablecoin metadata for ${known.symbol}:`, known.name);
+      console.log(`Using known token metadata for ${known.symbol}:`, known.name);
       return { name: known.name, version: "1" };
     }
 
@@ -238,8 +229,7 @@ export class X402PaymentService {
     // Get chain ID as number (required for EIP-712) - Polkadot Hub TestNet
     const chainId = 420420417;
 
-    // Try to get the actual domain from the contract, fallback to common values
-    // For USDC on Polkadot Hub, the domain is "USD Coin"
+    // Try to get the actual domain from the contract, fallback to defaults
     let domainName: string | undefined;
     let domainVersion: string | undefined;
     
@@ -254,11 +244,11 @@ export class X402PaymentService {
       domainName = contractDomain?.name;
       domainVersion = contractDomain?.version;
       
-      // If contract query failed, use "USD Coin" for USDC (standard USDC domain)
+      // If contract query failed (or token is a precompile with no metadata),
+      // fall back to our default domain.
       if (!domainName) {
-        console.log('Contract domain query failed, using standard USDC domain: "USD Coin"');
-        domainName = "USD Coin";
-        domainVersion = "1";
+        domainName = TOKEN_DOMAIN.name;
+        domainVersion = TOKEN_DOMAIN.version;
       }
     }
     
@@ -746,17 +736,11 @@ export class X402PaymentService {
     // If verification fails, try alternative domain names
     if (!verifyResult.isValid && verifyResult.invalidReason?.includes('signature')) {
       console.log('🔄 Verification failed, trying alternative domain names...');
-      // Try common domain name variations for USDC contracts
       const pasDomainEnv = String(import.meta.env?.VITE_PAS_X402_DOMAIN_NAME || 'PAS');
       const alternativeDomains = [
-        "USD Coin",
-        "USDX Coin", 
-        "USD Coin (Cronos)",
-        "USDC",
-        "Tether USD",
         pasDomainEnv,
         "PAS",
-        "Paseo"
+        "Paseo",
       ];
       
       for (const altDomain of alternativeDomains) {

@@ -25,7 +25,7 @@ export default function Landing({ onEnterApp }: LandingProps) {
             <span className="landing-title-accent">on Polkadot</span>
           </h1>
           <p className="landing-lead">
-            Create and manage recurring payments in native PAS or stablecoins (USDC, USDt). Connect your wallet and pay when due.
+            Create and manage recurring payments in native PAS. Connect your wallet and pay when due.
           </p>
           <div className="landing-hero-actions">
             <button type="button" className="landing-btn landing-btn-primary" onClick={onEnterApp}>
@@ -50,8 +50,8 @@ export default function Landing({ onEnterApp }: LandingProps) {
             <li className="landing-feature">
               <span className="landing-feature-icon">💧</span>
               <div>
-                <strong>Pay in PAS or stablecoins</strong>
-                <p>Pay with native PAS or Polkadot Hub stablecoins (USDC, USDt) with one click when a payment is due.</p>
+                <strong>Pay in native PAS</strong>
+                <p>Pay with native PAS with one click when a payment is due.</p>
               </div>
             </li>
             <li className="landing-feature">

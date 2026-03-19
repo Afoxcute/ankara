@@ -4,15 +4,9 @@ import {
   createX402PaymentService,
   X402PaymentService,
   PaymentRequirements,
-  USDC_TESTNET,
-  USDT_TESTNET,
   PAS_TESTNET,
 } from "./x402PaymentService";
 import { subscriptionApi, Subscription as ApiSubscription } from "./subscriptionApi";
-import {
-  USDC_SUBSCRIPTION_CONTRACT_ADDRESS,
-  USDt_SUBSCRIPTION_CONTRACT_ADDRESS,
-} from "../contracts/config";
 
 export interface Subscription {
   id: string;
@@ -24,14 +18,13 @@ export interface Subscription {
   nextPaymentDate: Date;
   isActive: boolean;
   autoPay: boolean;
-  paymentToken: 'PAS' | 'PAS_X402' | 'USDC' | 'USDt' | 'USDC_ONCHAIN' | 'USDt_ONCHAIN';
+  paymentToken: 'PAS' | 'PAS_X402';
   onChainSubscriptionId?: string | null; // SubscriptionManager contract id when created on-chain
-  onChainContractAddress?: string | null; // Which contract (PAS, USDC manager, USDt manager)
   usageData?: {
     lastUsed?: Date;
     usageCount?: number;
     avgUsagePerMonth?: number;
-    stablecoin?: 'USDC' | 'USDt' | 'PAS';
+    stablecoin?: 'PAS';
   };
 }
 
@@ -49,19 +42,12 @@ function apiToLocalSubscription(apiSub: ApiSubscription): Subscription {
   }
 
   const stablecoin = apiSub.usageData?.stablecoin;
-  const onChainAddr = apiSub.onChainContractAddress?.toLowerCase();
   const paymentToken: Subscription['paymentToken'] =
-    apiSub.onChainSubscriptionId && onChainAddr
-      ? USDC_SUBSCRIPTION_CONTRACT_ADDRESS?.toLowerCase() === onChainAddr
-        ? 'USDC_ONCHAIN'
-        : USDt_SUBSCRIPTION_CONTRACT_ADDRESS?.toLowerCase() === onChainAddr
-          ? 'USDt_ONCHAIN'
-          : 'PAS'
-      : stablecoin === 'USDt'
-        ? 'USDt'
-        : stablecoin === 'PAS'
-          ? 'PAS_X402'
-          : 'USDC';
+    apiSub.onChainSubscriptionId
+      ? 'PAS'
+      : stablecoin === 'PAS'
+        ? 'PAS_X402'
+        : 'PAS_X402';
 
   return {
     id: apiSub.id,
@@ -74,7 +60,6 @@ function apiToLocalSubscription(apiSub: ApiSubscription): Subscription {
     isActive: apiSub.isActive,
     autoPay: apiSub.autoPay,
     onChainSubscriptionId: apiSub.onChainSubscriptionId ?? undefined,
-    onChainContractAddress: apiSub.onChainContractAddress ?? undefined,
     paymentToken,
     usageData: apiSub.usageData ? {
       lastUsed: apiSub.usageData.lastUsed ? new Date(apiSub.usageData.lastUsed) : undefined,
@@ -144,7 +129,7 @@ export class SubscriptionAgent {
     }
 
     try {
-      // Pass undefined to load all subscriptions (PAS, USDC on-chain, USDt on-chain, and off-chain x402).
+      // Load subscriptions (PAS on-chain and PAS off-chain x402).
       const apiSubscriptions = await subscriptionApi.getUserSubscriptions(this.userAddress, undefined);
       this.subscriptions.clear();
       apiSubscriptions.forEach(apiSub => {
@@ -264,28 +249,19 @@ export class SubscriptionAgent {
         return { success: false, error: 'Wallet not connected' };
       }
 
-      // Off-chain ERC20 payments via Polkadot Hub precompiles.
-      // Stablecoins USDC/USDt have 6 decimals; PAS (x402) uses 18 decimals.
-      const amountDecimals =
-        subscription.paymentToken === 'USDt' || subscription.paymentToken === 'USDC'
-          ? 6
-          : 18;
+      if (subscription.paymentToken !== 'PAS_X402') {
+        return { success: false, error: 'Unsupported off-chain payment token (stablecoins removed)' };
+      }
 
-      const assetAddress =
-        subscription.paymentToken === 'USDt'
-          ? USDT_TESTNET
-          : subscription.paymentToken === 'PAS_X402'
-            ? PAS_TESTNET
-            : USDC_TESTNET;
-
-      const amountInBaseUnits = parseUnits(subscription.cost.toString(), amountDecimals).toString();
+      // Off-chain PAS payments via x402.
+      const amountInBaseUnits = parseUnits(subscription.cost.toString(), 18).toString();
 
       // Create payment requirements for x402
       const paymentRequirements: PaymentRequirements = {
         scheme: 'exact',
         network: 'polkadot-testnet',
         payTo: subscription.recipientAddress,
-        asset: assetAddress,
+        asset: PAS_TESTNET,
         maxAmountRequired: amountInBaseUnits,
         maxTimeoutSeconds: 300, // 5 minutes
         description: `Subscription payment for ${subscription.service}`,
