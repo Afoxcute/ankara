@@ -1,4 +1,8 @@
 import "./Landing.css";
+import {
+  POLKADOT_TESTNET_EXPLORER,
+  SUBSCRIPTION_CONTRACT_ADDRESS,
+} from "../contracts/config";
 
 interface LandingProps {
   onEnterApp: () => void;
@@ -32,7 +36,7 @@ export default function Landing({ onEnterApp }: LandingProps) {
               Get started
             </button>
             <a
-              href="https://blockscout-testnet.polkadot.io"
+              href={`${POLKADOT_TESTNET_EXPLORER}/address/${SUBSCRIPTION_CONTRACT_ADDRESS}`}
               target="_blank"
               rel="noopener noreferrer"
               className="landing-btn landing-btn-ghost"
