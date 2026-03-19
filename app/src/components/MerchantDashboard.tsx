@@ -12,6 +12,7 @@ import PaymentHistoryItem from "./PaymentHistoryItem";
 import "./CreateServiceForm.css";
 import "./MerchantDashboard.css";
 import { SUBSCRIPTION_CONTRACT_ADDRESS } from "../contracts/config";
+import RevenueAnalytics from "../pages/RevenueAnalytics";
 
 export default function MerchantDashboard({
   onSuccess,
@@ -21,7 +22,7 @@ export default function MerchantDashboard({
   onError?: (message: string) => void;
 }) {
   const account = useActiveAccount();
-  const [activeTab, setActiveTab] = useState<"overview" | "subscriptions">("overview");
+  const [activeTab, setActiveTab] = useState<"overview" | "subscriptions" | "analytics">("overview");
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -301,6 +302,12 @@ export default function MerchantDashboard({
         >
           Subscriptions
         </button>
+        <button
+          className={activeTab === "analytics" ? "nav-tab active" : "nav-tab"}
+          onClick={() => setActiveTab("analytics")}
+        >
+          Analytics
+        </button>
       </div>
 
       {error && <div className="merchant-error">❌ {error}</div>}
@@ -311,6 +318,8 @@ export default function MerchantDashboard({
         </div>
       ) : loading ? (
         <div className="loading">Loading merchant data...</div>
+      ) : activeTab === "analytics" ? (
+        <RevenueAnalytics />
       ) : activeTab === "overview" ? (
         <>
           <div className="merchant-actions" style={{ justifyContent: "space-between" }}>

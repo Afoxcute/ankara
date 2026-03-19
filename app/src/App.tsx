@@ -5,7 +5,6 @@ import { NotificationButton } from "./components/NotificationButton";
 import { NotificationToasts } from "./components/NotificationCenter";
 import SubscriptionManager from "./components/SubscriptionManager";
 import MerchantDashboard from "./components/MerchantDashboard";
-import RevenueAnalytics from "./pages/RevenueAnalytics";
 import Landing from "./pages/Landing";
 import PASBalance from "./components/PASBalance";
 
@@ -39,7 +38,6 @@ interface AppProps {
 export default function App({ thirdwebClient }: AppProps) {
   const { notifySuccess, notifyError } = useNotificationHelpers();
   const [showLanding, setShowLanding] = useState(true);
-  const [activeView, setActiveView] = useState<'subscriptions' | 'analytics'>('subscriptions');
   const [dashboardMode, setDashboardMode] = useState<"user" | "merchant">("user");
 
   // Initialize subscription agent
@@ -76,68 +74,48 @@ export default function App({ thirdwebClient }: AppProps) {
         </div>
       </header>
 
-      {/* Navigation Tabs */}
-      <div className="main-nav">
-        <button
-          className={activeView === 'subscriptions' ? 'active' : ''}
-          onClick={() => setActiveView('subscriptions')}
-        >
-          📋 Subscriptions
-        </button>
-        <button
-          className={activeView === 'analytics' ? 'active' : ''}
-          onClick={() => setActiveView('analytics')}
-        >
-          📊 Analytics
-        </button>
-      </div>
-
       <div className="main-content">
         <div className="tab-content">
-          {activeView === 'subscriptions' ? (
-            <>
-              <div className="dashboard-nav" style={{ marginTop: "0.25rem" }}>
-                <button
-                  type="button"
-                  className={dashboardMode === "user" ? "nav-tab active" : "nav-tab"}
-                  onClick={() => setDashboardMode("user")}
-                >
-                  👤 User Dashboard
-                </button>
-                <button
-                  type="button"
-                  className={dashboardMode === "merchant" ? "nav-tab active" : "nav-tab"}
-                  onClick={() => setDashboardMode("merchant")}
-                >
-                  🏪 Merchant Dashboard
-                </button>
-              </div>
+          <>
+            <div className="dashboard-nav" style={{ marginTop: "0.25rem" }}>
+              <button
+                type="button"
+                className={dashboardMode === "user" ? "nav-tab active" : "nav-tab"}
+                onClick={() => setDashboardMode("user")}
+              >
+                👤 User Dashboard
+              </button>
+              <button
+                type="button"
+                className={dashboardMode === "merchant" ? "nav-tab active" : "nav-tab"}
+                onClick={() => setDashboardMode("merchant")}
+              >
+                🏪 Merchant Dashboard
+              </button>
+            </div>
 
-              {dashboardMode === "user" ? (
-                <SubscriptionManager
-                  client={thirdwebClient}
-                  subscriptionAgent={subscriptionAgent}
-                  onSuccess={(message) => {
-                    notifySuccess("Success", message);
-                  }}
-                  onError={(message) => {
-                    notifyError("Error", message);
-                  }}
-                />
-              ) : (
-                <MerchantDashboard
-                  onSuccess={(message) => {
-                    notifySuccess("Success", message);
-                  }}
-                  onError={(message) => {
-                    notifyError("Error", message);
-                  }}
-                />
-              )}
-            </>
-          ) : (
-            <RevenueAnalytics />
-          )}
+            {dashboardMode === "user" ? (
+              <SubscriptionManager
+                client={thirdwebClient}
+                subscriptionAgent={subscriptionAgent}
+                onSuccess={(message) => {
+                  notifySuccess("Success", message);
+                }}
+                onError={(message) => {
+                  notifyError("Error", message);
+                }}
+              />
+            ) : (
+              <MerchantDashboard
+                onSuccess={(message) => {
+                  notifySuccess("Success", message);
+                }}
+                onError={(message) => {
+                  notifyError("Error", message);
+                }}
+              />
+            )}
+          </>
         </div>
       </div>
     </div>
