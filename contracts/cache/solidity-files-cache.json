@@ -529,8 +529,8 @@
       ]
     },
     "C:\\Users\\XPS\\ankara\\contracts\\contracts\\SubscriptionManagerPas.sol": {
-      "lastModificationDate": 1773912088945,
-      "contentHash": "f4120c701b8b8141bbb2d298f596d6d5",
+      "lastModificationDate": 1773917286376,
+      "contentHash": "4ea69f1c2dae0cc09f6808fe4605d68d",
       "sourceName": "contracts/SubscriptionManagerPas.sol",
       "solcConfig": {
         "version": "0.8.24",

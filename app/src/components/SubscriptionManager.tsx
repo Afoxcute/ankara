@@ -36,13 +36,19 @@ export default function SubscriptionManager({
   const [suggestions, setSuggestions] = useState<AISuggestion[]>([]);
   const [loading, setLoading] = useState(false);
   const [autoManageEnabled, setAutoManageEnabled] = useState(true);
-  const [showCreateForm, setShowCreateForm] = useState(false);
+  /** Single object so "subscribe to catalog" never opens with stale/null service (avoids wrong form mode). */
+  const [createForm, setCreateForm] = useState<
+    | { open: false }
+    | { open: true; mode: "create" }
+    | { open: true; mode: "subscribe"; service: Service }
+  >({ open: false });
   const [editingSubscription, setEditingSubscription] = useState<Subscription | null>(null);
   const [paymentHistory, setPaymentHistory] = useState<Map<string, Payment[]>>(new Map());
   const [loadingPayments, setLoadingPayments] = useState(false);
   const [allServices, setAllServices] = useState<Service[]>([]);
   const [loadingServices, setLoadingServices] = useState(false);
-  const [subscribeToService, setSubscribeToService] = useState<Service | null>(null);
+
+  const closeCreateForm = () => setCreateForm({ open: false });
 
   useEffect(() => {
     if (account?.address) {
@@ -371,7 +377,7 @@ export default function SubscriptionManager({
       <div className="subscription-actions">
         <button
           className="btn btn-primary"
-          onClick={() => { setSubscribeToService(null); setShowCreateForm(true); }}
+          onClick={() => setCreateForm({ open: true, mode: "create" })}
           disabled={loading}
         >
           ➕ Create New Service
@@ -415,10 +421,9 @@ export default function SubscriptionManager({
                   <button
                     type="button"
                     className="btn btn-primary btn-sm"
-                    onClick={() => {
-                      setSubscribeToService(svc);
-                      setShowCreateForm(true);
-                    }}
+                    onClick={() =>
+                      setCreateForm({ open: true, mode: "subscribe", service: svc })
+                    }
                     disabled={loading}
                   >
                     Subscribe
@@ -431,17 +436,31 @@ export default function SubscriptionManager({
       )}
 
       {/* Create Service Form */}
-      {showCreateForm && (
+      {createForm.open && (
         <CreateServiceForm
-          key={subscribeToService?.id ?? 'new'}
-          initialData={subscribeToService ? {
-            service: subscribeToService.name,
-            cost: typeof subscribeToService.cost === 'number' ? subscribeToService.cost : Number(subscribeToService.cost),
-            frequency: subscribeToService.frequency as 'monthly' | 'weekly' | 'yearly',
-            recipientAddress: subscribeToService.recipientAddress,
-            autoPay: true,
-            serviceId: subscribeToService.id,
-          } : undefined}
+          key={
+            createForm.mode === "subscribe"
+              ? `subscribe-${createForm.service.id}`
+              : "create-new-service"
+          }
+          initialData={
+            createForm.mode === "subscribe"
+              ? {
+                  service: createForm.service.name,
+                  cost:
+                    typeof createForm.service.cost === "number"
+                      ? createForm.service.cost
+                      : Number(createForm.service.cost),
+                  frequency: createForm.service.frequency as
+                    | "monthly"
+                    | "weekly"
+                    | "yearly",
+                  recipientAddress: createForm.service.recipientAddress,
+                  autoPay: true,
+                  serviceId: createForm.service.id,
+                }
+              : undefined
+          }
           onSubmit={async (serviceData) => {
             if (!account?.address) {
               onError?.('Connect your wallet to create a subscription');
@@ -449,7 +468,7 @@ export default function SubscriptionManager({
             }
             try {
               setLoading(true);
-              setSubscribeToService(null);
+              // Keep createForm unchanged until close — clearing service mid-flight remounted the form as "create"
 
               onSuccess?.('Creating subscription on-chain and syncing with API...');
               const isPrivate =
@@ -464,7 +483,8 @@ export default function SubscriptionManager({
                 : await contractSubscribe(
                     serviceData.recipientAddress,
                     serviceData.cost,
-                    serviceData.frequency
+                    serviceData.frequency,
+                    account.address
                   );
               await subscriptionApi.createSubscription({
                 ...(serviceData.serviceId
@@ -486,7 +506,7 @@ export default function SubscriptionManager({
               onSuccess?.(
                 `Subscription created (PAS: on-chain + x402-ready). Tx: ${txHash.slice(0, 10)}...`
               );
-              setShowCreateForm(false);
+              closeCreateForm();
               await loadSubscriptions();
               loadSuggestions();
               await loadAllServices();
@@ -497,7 +517,7 @@ export default function SubscriptionManager({
               setLoading(false);
             }
           }}
-          onCancel={() => { setShowCreateForm(false); setSubscribeToService(null); }}
+          onCancel={closeCreateForm}
           loading={loading || contractPending || confidentialPending}
         />
       )}

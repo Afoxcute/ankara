@@ -63,6 +63,13 @@ export const SUBSCRIPTION_ABI_NATIVE_PAS = [
     type: "function",
   },
   {
+    inputs: [],
+    name: "nextSubscriptionId",
+    outputs: [{ name: "", type: "uint256" }],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
     anonymous: false,
     inputs: [
       { indexed: true, name: "subscriptionId", type: "uint256" },

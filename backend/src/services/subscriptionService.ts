@@ -147,7 +147,33 @@ export class SubscriptionService {
    * Create a new subscription (with cache invalidation)
    */
   async createSubscription(input: CreateSubscriptionInput) {
-    const { serviceId, serviceName, cost, frequency, recipientAddress, userAddress, autoPay, onChainSubscriptionId, onChainContractAddress, usageData } = input;
+    const {
+      serviceId,
+      serviceName,
+      cost,
+      frequency: rawFrequency,
+      recipientAddress,
+      userAddress,
+      autoPay,
+      onChainSubscriptionId,
+      onChainContractAddress,
+      usageData,
+    } = input;
+
+    const frequency = String(rawFrequency ?? 'monthly').toLowerCase();
+    if (!['weekly', 'monthly', 'yearly'].includes(frequency)) {
+      throw new Error('Invalid frequency. Use weekly, monthly, or yearly.');
+    }
+
+    if (userAddress === undefined || userAddress === null || String(userAddress).trim() === '') {
+      throw new Error('userAddress is required');
+    }
+    if (recipientAddress === undefined || recipientAddress === null || String(recipientAddress).trim() === '') {
+      throw new Error('recipientAddress is required');
+    }
+    if (cost === undefined || cost === null || Number.isNaN(Number(cost)) || Number(cost) <= 0) {
+      throw new Error('cost must be a positive number');
+    }
 
     // Calculate next payment date
     const nextPaymentDate = this.calculateNextPaymentDate(frequency);
@@ -171,6 +197,16 @@ export class SubscriptionService {
 
     if (!finalServiceId) {
       throw new Error('Either serviceId or serviceName must be provided');
+    }
+
+    const existingService = await prisma.service.findUnique({
+      where: { id: finalServiceId },
+      select: { id: true },
+    });
+    if (!existingService) {
+      throw new Error(
+        'Service not found. Refresh Available Services and try again (the listing may be outdated).'
+      );
     }
 
     const normalizedUser = userAddress.toLowerCase();
@@ -267,6 +303,14 @@ export class SubscriptionService {
           await invalidateUserCaches();
           return raced;
         }
+      }
+      if (
+        err instanceof Prisma.PrismaClientKnownRequestError &&
+        err.code === 'P2003'
+      ) {
+        throw new Error(
+          'Invalid service reference. Refresh Available Services and try again.'
+        );
       }
       throw err;
     }

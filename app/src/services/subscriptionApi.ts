@@ -109,6 +109,20 @@ export const subscriptionApi = {
   },
 
   /**
+   * Create a catalog service only (POST /api/services). Does not create an on-chain subscription.
+   */
+  async createCatalogService(data: {
+    name: string;
+    description?: string;
+    cost: number;
+    frequency: string;
+    recipientAddress: string;
+  }): Promise<Service> {
+    const response = await api.post('/services', data);
+    return response.data.data;
+  },
+
+  /**
    * Get all subscriptions for a user. Pass contractAddress to only show subscriptions for the current contract.
    */
   async getUserSubscriptions(userAddress: string, contractAddress?: string): Promise<Subscription[]> {
@@ -129,8 +143,18 @@ export const subscriptionApi = {
    * Create a new subscription
    */
   async createSubscription(input: CreateSubscriptionInput): Promise<Subscription> {
-    const response = await api.post('/subscriptions', input);
-    return response.data.data;
+    try {
+      const response = await api.post('/subscriptions', input);
+      return response.data.data;
+    } catch (e: unknown) {
+      if (axios.isAxiosError(e) && e.response?.data) {
+        const msg = (e.response.data as { error?: string }).error;
+        if (typeof msg === 'string' && msg.length > 0) {
+          throw new Error(msg);
+        }
+      }
+      throw e;
+    }
   },
 
   /**
