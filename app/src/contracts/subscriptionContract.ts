@@ -1,11 +1,11 @@
 /**
  * SubscriptionManager contract integration for the frontend.
- * Native PAS on Polkadot Hub TestNet: deploy SubscriptionManagerFLOW.sol and set VITE_SUBSCRIPTION_CONTRACT_ADDRESS.
+ * Native PAS on Polkadot Hub TestNet: deploy SubscriptionManagerPas.sol and set VITE_SUBSCRIPTION_CONTRACT_ADDRESS.
  */
 import { getContract } from "viem";
 import { SUBSCRIPTION_CONTRACT_ADDRESS } from "./config";
 
-/** ABI for native PAS subscription manager (matches `SubscriptionManagerFLOW.sol`). pay() is payable. */
+/** ABI for native PAS subscription manager (matches `SubscriptionManagerPas.sol`). pay() is payable. */
 export const SUBSCRIPTION_ABI_NATIVE_PAS = [
   {
     inputs: [

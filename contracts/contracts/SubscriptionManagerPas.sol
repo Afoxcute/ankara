@@ -4,25 +4,22 @@ pragma solidity ^0.8.24;
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
 /**
- * @title SubscriptionManagerFLOW
- * @notice On-chain subscriptions with native PAS (Polkadot Hub). No ERC20; pay() is payable.
- * @dev Contract name kept for deployments/artifacts; token is PAS, not Flow blockchain.
+ * @title SubscriptionManagerPas
+ * @notice On-chain subscriptions with native PAS (Polkadot Hub TestNet). No ERC20; pay() is payable.
  */
-contract SubscriptionManagerFLOW is ReentrancyGuard {
+contract SubscriptionManagerPas is ReentrancyGuard {
     enum Frequency {
         Weekly,
         Monthly,
         Yearly
     }
 
-
-
-// sub done on exit, pay done on entry
+    // sub done on exit, pay done on entry
     struct Subscription {
         uint256 id;
         address subscriber;
         address recipient;
-        uint256 amountPerCycle;  // in wei (18 decimals, native PAS)
+        uint256 amountPerCycle; // in wei (18 decimals, native PAS)
         Frequency frequency;
         uint256 nextDueAt;
         bool active;

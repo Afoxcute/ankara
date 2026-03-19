@@ -7,7 +7,6 @@
     "test": "hardhat test",
     "deploy:testnet": "hardhat run scripts/deploy.ts --network polkadot-testnet",
     "deploy:pas": "hardhat run scripts/deploy-native-pas.ts --network polkadot-testnet",
-    "deploy:flow": "hardhat run scripts/deploy-native-pas.ts --network polkadot-testnet",
     "deploy:confidential": "hardhat run scripts/deploy-confidential.ts --network sepolia --config hardhat.sepolia.config.ts",
     "deploy:local": "hardhat run scripts/deploy.ts --network localhost",
     "export-abi": "hardhat run scripts/export-abi.ts"

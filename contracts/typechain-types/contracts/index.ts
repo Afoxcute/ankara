@@ -3,4 +3,4 @@
 /* eslint-disable */
 export type { MockERC20 } from "./MockERC20";
 export type { SubscriptionManager } from "./SubscriptionManager";
-export type { SubscriptionManagerFLOW } from "./SubscriptionManagerFLOW";
+export type { SubscriptionManagerPas } from "./SubscriptionManagerPas";

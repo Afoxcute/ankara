@@ -30,5 +30,5 @@ export type { MockERC20 } from "./contracts/MockERC20";
 export { MockERC20__factory } from "./factories/contracts/MockERC20__factory";
 export type { SubscriptionManager } from "./contracts/SubscriptionManager";
 export { SubscriptionManager__factory } from "./factories/contracts/SubscriptionManager__factory";
-export type { SubscriptionManagerFLOW } from "./contracts/SubscriptionManagerFLOW";
-export { SubscriptionManagerFLOW__factory } from "./factories/contracts/SubscriptionManagerFLOW__factory";
+export type { SubscriptionManagerPas } from "./contracts/SubscriptionManagerPas";
+export { SubscriptionManagerPas__factory } from "./factories/contracts/SubscriptionManagerPas__factory";

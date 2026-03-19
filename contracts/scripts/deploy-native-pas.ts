@@ -1,9 +1,8 @@
 import { ethers } from "hardhat";
 
 /**
- * Deploy SubscriptionManagerFLOW (native PAS on Polkadot Hub TestNet). No ERC20 payment token.
- * Contract name remains SubscriptionManagerFLOW for artifact compatibility.
- * Set PRIVATE_KEY in contracts/.env. Then: yarn deploy:pas (or yarn deploy:flow)
+ * Deploy SubscriptionManagerPas (native PAS on Polkadot Hub TestNet). No ERC20 payment token.
+ * Set PRIVATE_KEY in contracts/.env. Then: yarn deploy:pas
  */
 async function main() {
   const signers = await ethers.getSigners();
@@ -16,7 +15,7 @@ async function main() {
   }
   console.log("Deploying native PAS subscription manager with account:", deployer.address);
 
-  const Factory = await ethers.getContractFactory("SubscriptionManagerFLOW");
+  const Factory = await ethers.getContractFactory("SubscriptionManagerPas");
   const manager = await Factory.deploy();
   await manager.waitForDeployment();
   const address = await manager.getAddress();

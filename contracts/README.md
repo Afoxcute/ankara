@@ -4,7 +4,7 @@ Hardhat project for the on-chain subscription system used by the Ankara frontend
 
 ## Contracts
 
-- **SubscriptionManagerFLOW** (recommended): Same subscription model but **payments in native PAS**. No ERC20; `pay(subscriptionId)` is `payable` and forwards PAS to the recipient. Amounts in wei (18 decimals).
+- **SubscriptionManagerPas** (recommended): Same subscription model but **payments in native PAS**. No ERC20; `pay(subscriptionId)` is `payable` and forwards PAS to the recipient. Amounts in wei (18 decimals).
 - **SubscriptionManager**: ERC20-based, using Polkadot Hub native stablecoins (USDC at `0x0000053900000000000000000000000001200000`, USDt at `0x000007C000000000000000000000000001200000`) via ERC20 precompile.
 
 ## Setup
@@ -25,7 +25,7 @@ yarn compile
    ```bash
    yarn deploy:pas
    ```
-   (`yarn deploy:flow` runs the same script.) Deploys `SubscriptionManagerFLOW`. Copy the printed address.
+   Deploys `SubscriptionManagerPas`. Copy the printed address.
 3. **ERC20 (real stablecoin on-chain — USDC and/or USDt):**
    - Deploy one contract per payment token (constructor takes the token address).
    - For **USDC**:
@@ -40,12 +40,12 @@ yarn compile
      Copy the printed address and set in app `.env`: `VITE_USDT_SUBSCRIPTION_CONTRACT_ADDRESS=<address>`.
 4. In the app `.env` you can override the PAS contract (optional):
    ```
-   VITE_SUBSCRIPTION_CONTRACT_ADDRESS=<deployed SubscriptionManagerFLOW address>
+   VITE_SUBSCRIPTION_CONTRACT_ADDRESS=<deployed SubscriptionManagerPas address>
    VITE_USDC_SUBSCRIPTION_CONTRACT_ADDRESS=<deployed USDC SubscriptionManager address>
    VITE_USDT_SUBSCRIPTION_CONTRACT_ADDRESS=<deployed USDt SubscriptionManager address>
    ```
 
-**Current SubscriptionManagerFLOW (Polkadot Hub TestNet):** `0xb2AC0Db5788B222c417F9C1353C5574bC8106C77`
+**Example deployed address (Polkadot Hub TestNet; redeploy for `SubscriptionManagerPas`):** `0xb2AC0Db5788B222c417F9C1353C5574bC8106C77` — update after `yarn deploy:pas`.
 
 ## Export ABI for frontend
 

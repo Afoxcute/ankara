@@ -528,10 +528,10 @@
         "StorageSlot"
       ]
     },
-    "C:\\Users\\XPS\\ankara\\contracts\\contracts\\SubscriptionManagerFLOW.sol": {
-      "lastModificationDate": 1773819738167,
-      "contentHash": "f5901928239412b6b183170624b8e4f8",
-      "sourceName": "contracts/SubscriptionManagerFLOW.sol",
+    "C:\\Users\\XPS\\ankara\\contracts\\contracts\\SubscriptionManagerPas.sol": {
+      "lastModificationDate": 1773912088945,
+      "contentHash": "f4120c701b8b8141bbb2d298f596d6d5",
+      "sourceName": "contracts/SubscriptionManagerPas.sol",
       "solcConfig": {
         "version": "0.8.24",
         "settings": {
@@ -563,7 +563,7 @@
         "^0.8.24"
       ],
       "artifacts": [
-        "SubscriptionManagerFLOW"
+        "SubscriptionManagerPas"
       ]
     }
   }

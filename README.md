@@ -66,7 +66,7 @@
 | Concept | Description |
 |--------|-------------|
 | **Service** | A payable offering (name, cost, frequency, recipient address). Created once; visible to all users. Stored in backend only. |
-| **Subscription** | A user’s commitment to a service. Stored in backend and optionally on-chain (Flow or Sepolia). Has `onChainSubscriptionId` and `onChainContractAddress` when created via the app’s contract flow. |
+| **Subscription** | A user’s commitment to a service. Stored in backend and optionally on-chain (Polkadot Hub or Sepolia). Has `onChainSubscriptionId` and `onChainContractAddress` when created via the app’s on-chain subscription step. |
 | **Payment** | A recorded payment for a subscription (amount, tx hash, network). Stored in backend. |
 
 ### Frequencies
@@ -94,7 +94,7 @@
 
 ### 1. Native PAS subscription manager (Polkadot Hub TestNet)
 
-- **Path:** `contracts/contracts/SubscriptionManagerFLOW.sol` (Solidity contract name is historical; network is Polkadot Hub, token is PAS.)
+- **Path:** `contracts/contracts/SubscriptionManagerPas.sol`
 - **Network:** Polkadot Hub TestNet (chain ID 420420417)
 - **Payments:** Native PAS (18 decimals). No ERC20.
 
@@ -195,7 +195,7 @@ Auto-pay uses a Bull queue (Redis). Scheduler checks for due subscriptions and e
 | Variable | Description |
 |----------|-------------|
 | `VITE_API_URL` | Backend API base URL (e.g. `http://localhost:5000/api`). |
-| `VITE_SUBSCRIPTION_CONTRACT_ADDRESS` | SubscriptionManagerFLOW on Polkadot Hub TestNet. |
+| `VITE_SUBSCRIPTION_CONTRACT_ADDRESS` | `SubscriptionManagerPas` deployment on Polkadot Hub TestNet. |
 | `VITE_CONFIDENTIAL_SUBSCRIPTION_CONTRACT_ADDRESS` | (Optional) ConfidentialSubscriptionManager on Sepolia. |
 
 ### Backend (`backend/.env`)
@@ -276,7 +276,7 @@ yarn deploy:confidential
 
 ### Contracts
 
-- **Polkadot Hub TestNet (public):** `cd contracts && yarn deploy:pas` (or `yarn deploy:flow`; default network is `polkadot-testnet`).
+- **Polkadot Hub TestNet (public):** `cd contracts && yarn deploy:pas` (default network is `polkadot-testnet`).
 - **Sepolia (confidential):** `cd contracts && yarn deploy:confidential` (uses `hardhat.sepolia.config.ts` and `contracts-sepolia/`).
 
 ### Backend
@@ -296,7 +296,7 @@ yarn deploy:confidential
 
 | Layer | Role |
 |-------|------|
-| **Native PAS manager (`SubscriptionManagerFLOW.sol`)** | On-chain subscriptions and native PAS on Polkadot Hub TestNet. |
+| **Native PAS manager (`SubscriptionManagerPas.sol`)** | On-chain subscriptions and native PAS on Polkadot Hub TestNet. |
 | **ConfidentialSubscriptionManager** | Optional private subscriptions (encrypted amount) on Sepolia via Zama FHEVM. |
 | **Backend** | Services catalog, user subscriptions, payment records, auto-pay queue, statistics. |
 | **App** | Wallet connect, create/subscribe to services, pay, cancel, view history, AI suggestions; supports public PAS (Polkadot Hub) and confidential (Sepolia) subscriptions. |
