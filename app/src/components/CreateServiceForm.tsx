@@ -31,6 +31,8 @@ export default function CreateServiceForm({
   const account = useActiveAccount();
   const isEditMode = !!initialData && !(initialData as { serviceId?: string }).serviceId;
   const existingServiceId = (initialData as { serviceId?: string } | undefined)?.serviceId;
+  /** Subscribing to a catalog service — don't treat as creating a new service. */
+  const isSubscribeToExisting = !!existingServiceId && !isEditMode;
   const [serviceName, setServiceName] = useState(initialData?.service || '');
   const [cost, setCost] = useState(initialData?.cost.toString() || '');
   const [frequency, setFrequency] = useState<'monthly' | 'weekly' | 'yearly'>((initialData?.frequency as 'monthly' | 'weekly' | 'yearly') || 'monthly');
@@ -104,7 +106,7 @@ export default function CreateServiceForm({
         <form onSubmit={handleSubmit}>
           <div className="form-group">
             <label className="form-label">
-              Service Name <span className="required">*</span>
+              {isSubscribeToExisting ? 'Service' : 'Service Name'} <span className="required">*</span>
             </label>
             <input
               type="text"
@@ -115,7 +117,8 @@ export default function CreateServiceForm({
                 setErrors(prev => ({ ...prev, serviceName: '' }));
               }}
               placeholder="e.g., Netflix-Web3, Spotify-Crypto, Cloud-Storage"
-              disabled={loading}
+              disabled={loading || isSubscribeToExisting}
+              title={isSubscribeToExisting ? 'Terms come from the published service' : undefined}
             />
             {errors.serviceName && (
               <span className="error-message">{errors.serviceName}</span>
@@ -138,7 +141,7 @@ export default function CreateServiceForm({
                 placeholder="0.01"
                 min="0"
                 step="0.001"
-                disabled={loading}
+                disabled={loading || isSubscribeToExisting}
               />
               {errors.cost && (
                 <span className="error-message">{errors.cost}</span>
@@ -153,7 +156,7 @@ export default function CreateServiceForm({
                 className="form-select"
                 value={frequency}
                 onChange={(e) => setFrequency(e.target.value as 'monthly' | 'weekly' | 'yearly')}
-                disabled={loading}
+                disabled={loading || isSubscribeToExisting}
               >
                 <option value="monthly">Monthly</option>
                 <option value="weekly">Weekly</option>
@@ -164,8 +167,17 @@ export default function CreateServiceForm({
 
           <div className="form-group">
             <div className="form-hint" style={{ marginBottom: '0.75rem' }}>
-              <strong>Payment asset: PAS</strong> — one asset for both on-chain subscription registration and
-              x402 PAS settlement (the app uses on-chain billing when your subscription is linked to the contract).
+              {isSubscribeToExisting ? (
+                <>
+                  <strong>Subscribing to a listed service</strong> — amount, schedule, and recipient are set by the
+                  provider. You&apos;ll register on-chain and start your own subscription.
+                </>
+              ) : (
+                <>
+                  <strong>Payment asset: PAS</strong> — one asset for both on-chain subscription registration and
+                  x402 PAS settlement (the app uses on-chain billing when your subscription is linked to the contract).
+                </>
+              )}
             </div>
           </div>
 
@@ -183,9 +195,9 @@ export default function CreateServiceForm({
                   setErrors(prev => ({ ...prev, recipientAddress: '' }));
                 }}
                 placeholder="0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb0"
-                disabled={loading}
+                disabled={loading || isSubscribeToExisting}
               />
-              {account?.address && (
+              {account?.address && !isSubscribeToExisting && (
                 <button
                   type="button"
                   className="btn btn-secondary btn-sm"
@@ -200,11 +212,13 @@ export default function CreateServiceForm({
               <span className="error-message">{errors.recipientAddress}</span>
             )}
             <div className="form-hint">
-              This is the wallet address that will receive payments for this service
+              {isSubscribeToExisting
+                ? 'Provider wallet — payments from your subscription go here (from the service listing).'
+                : 'This is the wallet address that will receive payments for this service'}
             </div>
           </div>
 
-          {CONFIDENTIAL_SUBSCRIPTION_CONTRACT_ADDRESS && !isEditMode && (
+          {CONFIDENTIAL_SUBSCRIPTION_CONTRACT_ADDRESS && !isEditMode && !existingServiceId && (
             <div className="form-group">
               <label className="checkbox-group">
                 <input
@@ -249,7 +263,17 @@ export default function CreateServiceForm({
               className="btn btn-primary"
               disabled={loading}
             >
-              {loading ? (isEditMode ? 'Updating...' : 'Creating...') : (isEditMode ? 'Update Service' : 'Create Service')}
+              {loading
+                ? isEditMode
+                  ? 'Updating...'
+                  : isSubscribeToExisting
+                    ? 'Subscribing...'
+                    : 'Creating...'
+                : isEditMode
+                  ? 'Update Service'
+                  : isSubscribeToExisting
+                    ? 'Subscribe'
+                    : 'Create Service'}
             </button>
           </div>
         </form>
