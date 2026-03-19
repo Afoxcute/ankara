@@ -9,7 +9,11 @@ import {
   PAS_TESTNET,
 } from "./x402PaymentService";
 import { subscriptionApi, Subscription as ApiSubscription } from "./subscriptionApi";
-import { SUBSCRIPTION_CONTRACT_ADDRESS } from "../contracts/config";
+import {
+  SUBSCRIPTION_CONTRACT_ADDRESS,
+  USDC_SUBSCRIPTION_CONTRACT_ADDRESS,
+  USDt_SUBSCRIPTION_CONTRACT_ADDRESS,
+} from "../contracts/config";
 
 export interface Subscription {
   id: string;
@@ -21,8 +25,9 @@ export interface Subscription {
   nextPaymentDate: Date;
   isActive: boolean;
   autoPay: boolean;
-  paymentToken: 'PAS' | 'PAS_X402' | 'USDC' | 'USDt';
+  paymentToken: 'PAS' | 'PAS_X402' | 'USDC' | 'USDt' | 'USDC_ONCHAIN' | 'USDt_ONCHAIN';
   onChainSubscriptionId?: string | null; // SubscriptionManager contract id when created on-chain
+  onChainContractAddress?: string | null; // Which contract (PAS, USDC manager, USDt manager)
   usageData?: {
     lastUsed?: Date;
     usageCount?: number;
@@ -45,9 +50,14 @@ function apiToLocalSubscription(apiSub: ApiSubscription): Subscription {
   }
 
   const stablecoin = apiSub.usageData?.stablecoin;
+  const onChainAddr = apiSub.onChainContractAddress?.toLowerCase();
   const paymentToken: Subscription['paymentToken'] =
-    apiSub.onChainSubscriptionId
-      ? 'PAS'
+    apiSub.onChainSubscriptionId && onChainAddr
+      ? USDC_SUBSCRIPTION_CONTRACT_ADDRESS?.toLowerCase() === onChainAddr
+        ? 'USDC_ONCHAIN'
+        : USDt_SUBSCRIPTION_CONTRACT_ADDRESS?.toLowerCase() === onChainAddr
+          ? 'USDt_ONCHAIN'
+          : 'PAS'
       : stablecoin === 'USDt'
         ? 'USDt'
         : stablecoin === 'PAS'
@@ -65,6 +75,7 @@ function apiToLocalSubscription(apiSub: ApiSubscription): Subscription {
     isActive: apiSub.isActive,
     autoPay: apiSub.autoPay,
     onChainSubscriptionId: apiSub.onChainSubscriptionId ?? undefined,
+    onChainContractAddress: apiSub.onChainContractAddress ?? undefined,
     paymentToken,
     usageData: apiSub.usageData ? {
       lastUsed: apiSub.usageData.lastUsed ? new Date(apiSub.usageData.lastUsed) : undefined,
@@ -134,8 +145,8 @@ export class SubscriptionAgent {
     }
 
     try {
-      const contractAddress = SUBSCRIPTION_CONTRACT_ADDRESS || undefined;
-      const apiSubscriptions = await subscriptionApi.getUserSubscriptions(this.userAddress, contractAddress);
+      // Pass undefined to load all subscriptions (PAS, USDC on-chain, USDt on-chain, and off-chain x402).
+      const apiSubscriptions = await subscriptionApi.getUserSubscriptions(this.userAddress, undefined);
       this.subscriptions.clear();
       apiSubscriptions.forEach(apiSub => {
         const localSub = apiToLocalSubscription(apiSub);

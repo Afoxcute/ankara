@@ -42,10 +42,11 @@ export class SubscriptionService {
    * subscriptions for that contract (or with no on-chain id). Hides subscriptions from other contracts.
    */
   async getUserSubscriptions(userAddress: string, contractAddress?: string) {
-    const currentContract = contractAddress ?? process.env.SUBSCRIPTION_CONTRACT_ADDRESS;
+    // When contractAddress is not passed, return all subscriptions (PAS, USDC, USDt, off-chain).
+    const currentContract = contractAddress;
     const cacheKey = currentContract
       ? `${CacheKeys.userSubscriptions(userAddress)}:${currentContract}`
-      : CacheKeys.userSubscriptions(userAddress);
+      : `${CacheKeys.userSubscriptions(userAddress)}:all`;
 
     return cacheService.getOrSet(
       cacheKey,

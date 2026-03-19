@@ -22,7 +22,11 @@ export default function SubscriptionCard({
   const assetLabel =
     subscription.paymentToken === 'PAS' || subscription.paymentToken === 'PAS_X402'
       ? 'PAS'
-      : subscription.paymentToken;
+      : subscription.paymentToken === 'USDC_ONCHAIN' || subscription.paymentToken === 'USDC'
+        ? 'USDC'
+        : subscription.paymentToken === 'USDt_ONCHAIN' || subscription.paymentToken === 'USDt'
+          ? 'USDt'
+          : subscription.paymentToken;
   const daysUntilDue = Math.ceil(
     (subscription.nextPaymentDate.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)
   );

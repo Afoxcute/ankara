@@ -26,13 +26,23 @@ yarn compile
    yarn deploy:flow
    ```
    Deploys `SubscriptionManagerFLOW`. Copy the printed address.
-3. **ERC20 (USDC):**
-   ```bash
-   yarn deploy:testnet
+3. **ERC20 (real stablecoin on-chain — USDC and/or USDt):**
+   - Deploy one contract per payment token (constructor takes the token address).
+   - For **USDC**:
+     ```bash
+     USDC_ADDRESS=0x0000053900000000000000000000000001200000 yarn deploy:testnet
+     ```
+     Copy the printed address and set in app `.env`: `VITE_USDC_SUBSCRIPTION_CONTRACT_ADDRESS=<address>`.
+   - For **USDt**:
+     ```bash
+     USDC_ADDRESS=0x000007C000000000000000000000000001200000 yarn deploy:testnet
+     ```
+     Copy the printed address and set in app `.env`: `VITE_USDT_SUBSCRIPTION_CONTRACT_ADDRESS=<address>`.
+4. In the app `.env` you can override the PAS contract (optional):
    ```
-4. In the app `.env` you can override the address (optional; app default is set below):
-   ```
-   VITE_SUBSCRIPTION_CONTRACT_ADDRESS=<deployed address>
+   VITE_SUBSCRIPTION_CONTRACT_ADDRESS=<deployed SubscriptionManagerFLOW address>
+   VITE_USDC_SUBSCRIPTION_CONTRACT_ADDRESS=<deployed USDC SubscriptionManager address>
+   VITE_USDT_SUBSCRIPTION_CONTRACT_ADDRESS=<deployed USDt SubscriptionManager address>
    ```
 
 **Current SubscriptionManagerFLOW (Polkadot Hub TestNet):** `0xb2AC0Db5788B222c417F9C1353C5574bC8106C77`

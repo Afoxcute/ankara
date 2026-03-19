@@ -226,6 +226,9 @@ export const SUBSCRIPTION_ABI = [
   },
 ] as const;
 
+// ERC20 SubscriptionManager ABI (USDC/USDt precompile-based payments).
+export const SUBSCRIPTION_ABI_ERC20 = SUBSCRIPTION_ABI;
+
 export type Frequency = 0 | 1 | 2; // Weekly, Monthly, Yearly
 
 export interface SubscriptionOnChain {

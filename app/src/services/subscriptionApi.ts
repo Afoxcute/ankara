@@ -21,6 +21,7 @@ export interface Subscription {
   isActive: boolean;
   autoPay: boolean;
   onChainSubscriptionId?: string | null; // SubscriptionManager contract id (uint256 as string)
+  onChainContractAddress?: string | null; // Contract address (PAS, USDC manager, USDt manager)
   usageData?: {
     lastUsed?: string;
     usageCount?: number;
