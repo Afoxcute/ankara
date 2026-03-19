@@ -5,7 +5,8 @@ import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
 /**
  * @title SubscriptionManagerFLOW
- * @notice On-chain subscriptions with payments in native FLOW. No ERC20; pay() is payable.
+ * @notice On-chain subscriptions with native PAS (Polkadot Hub). No ERC20; pay() is payable.
+ * @dev Contract name kept for deployments/artifacts; token is PAS, not Flow blockchain.
  */
 contract SubscriptionManagerFLOW is ReentrancyGuard {
     enum Frequency {
@@ -21,7 +22,7 @@ contract SubscriptionManagerFLOW is ReentrancyGuard {
         uint256 id;
         address subscriber;
         address recipient;
-        uint256 amountPerCycle;  // in wei (18 decimals, native FLOW)
+        uint256 amountPerCycle;  // in wei (18 decimals, native PAS)
         Frequency frequency;
         uint256 nextDueAt;
         bool active;
@@ -89,7 +90,7 @@ contract SubscriptionManagerFLOW is ReentrancyGuard {
     }
 
     /**
-     * @notice Pay with native FLOW. Send msg.value >= amountPerCycle; excess is forwarded to recipient.
+     * @notice Pay with native PAS. Send msg.value >= amountPerCycle; excess is forwarded to recipient.
      */
     function pay(uint256 subscriptionId) external payable nonReentrant {
         Subscription storage sub = subscriptions[subscriptionId];

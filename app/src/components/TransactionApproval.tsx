@@ -168,7 +168,7 @@ export default function TransactionApproval({
           </div>
 
           <div className="form-group">
-            <label className="form-label">Amount (FLOW)</label>
+            <label className="form-label">Amount (PAS)</label>
             <input
               type="number"
               className="form-input"
@@ -294,7 +294,7 @@ function TransactionCard({
         </div>
         <div className="detail-row">
           <span className="detail-label">Amount:</span>
-          <span className="detail-value">{transaction.value} FLOW</span>
+          <span className="detail-value">{transaction.value} PAS</span>
         </div>
         <div className="detail-row">
           <span className="detail-label">Proposed by:</span>

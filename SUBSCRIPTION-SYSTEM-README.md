@@ -292,7 +292,7 @@ REDIS_HOST=host
 REDIS_PORT=port
 
 # x402 Configuration
-FACILITATOR_URL=<your-payment-facilitator-url>   # Optional; for x402 settlement on Flow
+FACILITATOR_URL=<your-payment-facilitator-url>   # Optional; for x402 settlement (e.g. Polkadot Hub / PAS)
 USDC_MINT_TESTNET=0x0000053900000000000000000000000001200000
 ```
 

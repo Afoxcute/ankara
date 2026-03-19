@@ -12,7 +12,7 @@ export interface CreateSubscriptionInput {
   userAddress: string;
   autoPay?: boolean;
   onChainSubscriptionId?: string; // SubscriptionManager contract subscription id (uint256 as string)
-  onChainContractAddress?: string; // Contract address (e.g. SubscriptionManagerFLOW) for filtering
+  onChainContractAddress?: string; // Deployed native-PAS subscription manager on Polkadot Hub TestNet
   usageData?: {
     lastUsed?: Date;
     usageCount?: number;

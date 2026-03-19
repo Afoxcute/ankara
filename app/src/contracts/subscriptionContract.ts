@@ -1,12 +1,12 @@
 /**
  * SubscriptionManager contract integration for the frontend.
- * Use FLOW (native) contract: deploy SubscriptionManagerFLOW and set VITE_SUBSCRIPTION_CONTRACT_ADDRESS.
+ * Native PAS on Polkadot Hub TestNet: deploy SubscriptionManagerFLOW.sol and set VITE_SUBSCRIPTION_CONTRACT_ADDRESS.
  */
 import { getContract } from "viem";
 import { SUBSCRIPTION_CONTRACT_ADDRESS } from "./config";
 
-/** ABI for SubscriptionManagerFLOW: native FLOW payments. pay() is payable. */
-export const SUBSCRIPTION_ABI_FLOW = [
+/** ABI for native PAS subscription manager (matches `SubscriptionManagerFLOW.sol`). pay() is payable. */
+export const SUBSCRIPTION_ABI_NATIVE_PAS = [
   {
     inputs: [
       { name: "recipient", type: "address" },
@@ -98,7 +98,7 @@ export const SUBSCRIPTION_ABI_FLOW = [
     name: "SubscriptionCancelled",
     type: "event",
   },
-  // Custom errors (SubscriptionManagerFLOW) so reverts decode
+  // Custom errors (native PAS subscription manager) so reverts decode
   { type: "error", name: "InvalidRecipient", inputs: [] },
   { type: "error", name: "InvalidAmount", inputs: [] },
   { type: "error", name: "SubscriptionNotFound", inputs: [] },
@@ -109,7 +109,7 @@ export const SUBSCRIPTION_ABI_FLOW = [
   { type: "error", name: "TransferFailed", inputs: [] },
 ] as const;
 
-/** @deprecated Use SUBSCRIPTION_ABI_FLOW for native FLOW. Kept for reference (ERC20 contract). */
+/** @deprecated Use SUBSCRIPTION_ABI_NATIVE_PAS for native PAS. Kept for reference (ERC20 contract). */
 export const SUBSCRIPTION_ABI = [
   {
     inputs: [{ name: "_paymentToken", type: "address" }],

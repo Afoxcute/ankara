@@ -30,7 +30,7 @@
   PostgreSQL + Express API for services catalog, user subscriptions, payment history, auto-pay queue (Bull + Redis), and statistics. Subscriptions are synced with on-chain IDs and contract addresses.
 
 - **Frontend**  
-  React (Vite) + Thirdweb: connect wallet (Flow testnet or Sepolia for confidential), create or subscribe to services, pay when due, view payment history, and use AI suggestions for cancellations.
+  React (Vite) + Thirdweb: connect wallet (Polkadot Hub TestNet or Sepolia for confidential), create or subscribe to services, pay when due, view payment history, and use AI suggestions for cancellations.
 
 ---
 
@@ -73,14 +73,14 @@
 
 - **Weekly**, **Monthly**, **Yearly** (on-chain and in backend).
 
-### Flow (public, Flow testnet)
+### Public subscriptions (Polkadot Hub TestNet)
 
 1. User connects wallet (Polkadot Hub TestNet).
 2. **Create new service**: name, cost (PAS), frequency, recipient → contract `subscribe(recipient, amountWei, frequency)` → backend `POST /api/subscriptions` with `onChainSubscriptionId` and contract address.
 3. **Subscribe to existing service**: pick from “Available services” → same contract + backend flow with `serviceId`.
 4. When due: user (or auto-pay) sends PAS via contract `pay(subscriptionId)`; backend records payment.
 
-### Flow (confidential, Sepolia)
+### Confidential subscriptions (Sepolia)
 
 1. User connects wallet (Sepolia).
 2. App uses `@zama-fhe/relayer-sdk` to encrypt amount and get proof.
@@ -92,9 +92,9 @@
 
 ## Smart contracts
 
-### 1. SubscriptionManagerFLOW (Polkadot Hub TestNet)
+### 1. Native PAS subscription manager (Polkadot Hub TestNet)
 
-- **Path:** `contracts/contracts/SubscriptionManagerFLOW.sol`
+- **Path:** `contracts/contracts/SubscriptionManagerFLOW.sol` (Solidity contract name is historical; network is Polkadot Hub, token is PAS.)
 - **Network:** Polkadot Hub TestNet (chain ID 420420417)
 - **Payments:** Native PAS (18 decimals). No ERC20.
 
@@ -184,7 +184,7 @@ Auto-pay uses a Bull queue (Redis). Scheduler checks for due subscriptions and e
 
 **Config (app):**
 
-- `app/src/contracts/config.ts`: default contract addresses, Flow testnet chain id, Sepolia chain id.
+- `app/src/contracts/config.ts`: default contract addresses, Polkadot Hub TestNet chain id, Sepolia chain id.
 
 ---
 
@@ -225,14 +225,14 @@ Auto-pay uses a Bull queue (Redis). Scheduler checks for due subscriptions and e
 - PostgreSQL database
 - Redis (for backend auto-pay)
 
-### 1. Contracts (Flow testnet)
+### 1. Contracts (Polkadot Hub TestNet)
 
 ```bash
 cd contracts
 cp .env.example .env   # or create .env with PRIVATE_KEY
 yarn install
 yarn compile
-yarn deploy:flow
+yarn deploy:pas
 # Set VITE_SUBSCRIPTION_CONTRACT_ADDRESS in app/.env to the deployed address
 ```
 
@@ -276,7 +276,7 @@ yarn deploy:confidential
 
 ### Contracts
 
-- **Polkadot Hub TestNet (public):** `cd contracts && yarn deploy:flow` (default network is `polkadot-testnet`).
+- **Polkadot Hub TestNet (public):** `cd contracts && yarn deploy:pas` (or `yarn deploy:flow`; default network is `polkadot-testnet`).
 - **Sepolia (confidential):** `cd contracts && yarn deploy:confidential` (uses `hardhat.sepolia.config.ts` and `contracts-sepolia/`).
 
 ### Backend
@@ -296,9 +296,9 @@ yarn deploy:confidential
 
 | Layer | Role |
 |-------|------|
-| **SubscriptionManagerFLOW** | On-chain subscriptions and native PAS payments on Polkadot Hub TestNet. |
+| **Native PAS manager (`SubscriptionManagerFLOW.sol`)** | On-chain subscriptions and native PAS on Polkadot Hub TestNet. |
 | **ConfidentialSubscriptionManager** | Optional private subscriptions (encrypted amount) on Sepolia via Zama FHEVM. |
 | **Backend** | Services catalog, user subscriptions, payment records, auto-pay queue, statistics. |
-| **App** | Wallet connect, create/subscribe to services, pay, cancel, view history, AI suggestions; supports both public (Flow) and confidential (Sepolia) subscriptions. |
+| **App** | Wallet connect, create/subscribe to services, pay, cancel, view history, AI suggestions; supports public PAS (Polkadot Hub) and confidential (Sepolia) subscriptions. |
 
 All services created in the app are available to every connected user via “Available services”; anyone can subscribe to any service and pay on-chain.

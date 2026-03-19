@@ -6,7 +6,7 @@ import { NotificationToasts } from "./components/NotificationCenter";
 import SubscriptionManager from "./components/SubscriptionManager";
 import RevenueAnalytics from "./pages/RevenueAnalytics";
 import Landing from "./pages/Landing";
-import PASBalance from "./components/FLOWBalance";
+import PASBalance from "./components/PASBalance";
 
 import {
   ThirdwebClient,

@@ -23,9 +23,9 @@ yarn compile
    ```
 2. **Native PAS (recommended):**
    ```bash
-   yarn deploy:flow
+   yarn deploy:pas
    ```
-   Deploys `SubscriptionManagerFLOW`. Copy the printed address.
+   (`yarn deploy:flow` runs the same script.) Deploys `SubscriptionManagerFLOW`. Copy the printed address.
 3. **ERC20 (real stablecoin on-chain — USDC and/or USDt):**
    - Deploy one contract per payment token (constructor takes the token address).
    - For **USDC**:
@@ -57,10 +57,10 @@ npx hardhat run scripts/export-abi.ts
 
 This writes the ABI to `app/src/contracts/SubscriptionManager.json`. The app also has a minimal inline ABI in `subscriptionContract.ts` for direct use with viem.
 
-## Usage from frontend (SubscriptionManagerFLOW)
+## Usage from frontend (native PAS manager)
 
-- **Create subscription**: `subscribe(recipientAddress, amountPerCycleWei, frequency)` where `frequency` is 0 = Weekly, 1 = Monthly, 2 = Yearly. Amount in wei (18 decimals, FLOW).
-- **Pay**: Send native FLOW with the transaction: `pay(subscriptionId)` with `value = amountPerCycle` (no approval).
+- **Create subscription**: `subscribe(recipientAddress, amountPerCycleWei, frequency)` where `frequency` is 0 = Weekly, 1 = Monthly, 2 = Yearly. Amount in wei (18 decimals, PAS).
+- **Pay**: Send native PAS with the transaction: `pay(subscriptionId)` with `value = amountPerCycle` (no approval).
 - **Cancel**: `cancel(subscriptionId)` (callable only by subscriber).
 
 Backend can listen for `PaymentMade` and call the existing `recordPayment` API with `transactionHash` to keep the database in sync.

@@ -1,11 +1,12 @@
 import { useActiveAccount, useWalletBalance } from "thirdweb/react";
 import { POLKADOT_HUB_TESTNET } from "../services/x402PaymentService";
 
-interface FLOWBalanceProps {
+interface PASBalanceProps {
   client: unknown;
 }
 
-export default function FLOWBalance({ client }: FLOWBalanceProps) {
+/** Native PAS balance on Polkadot Hub TestNet. */
+export default function PASBalance({ client }: PASBalanceProps) {
   const account = useActiveAccount();
   const { data: balance, isLoading } = useWalletBalance({
     chain: POLKADOT_HUB_TESTNET,

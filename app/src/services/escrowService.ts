@@ -6,7 +6,7 @@ export interface Escrow {
   depositor: string;
   recipient: string;
   amount: string;
-  tokenAddress?: string; // For token escrows, undefined for native FLOW
+  tokenAddress?: string; // For token escrows, undefined for native PAS (Polkadot Hub)
   status: 'pending' | 'approved' | 'executed' | 'cancelled';
   conditions: string;
   createdAt: number;

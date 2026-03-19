@@ -17,7 +17,7 @@ import { POLKADOT_HUB_TESTNET } from "../services/x402PaymentService";
 import {
   SUBSCRIPTION_CONTRACT_ADDRESS,
 } from "../contracts/config";
-import { SUBSCRIPTION_ABI_FLOW } from "../contracts/subscriptionContract";
+import { SUBSCRIPTION_ABI_NATIVE_PAS } from "../contracts/subscriptionContract";
 import { subscriptionApi } from "../services/subscriptionApi";
 import { parseUnits, encodeEventTopics } from "viem";
 
@@ -54,7 +54,7 @@ export function getSubscriptionManagerContract(client: ThirdwebClient) {
     client,
     chain: POLKADOT_HUB_TESTNET,
     address: SUBSCRIPTION_CONTRACT_ADDRESS as `0x${string}`,
-    abi: SUBSCRIPTION_ABI_FLOW,
+    abi: SUBSCRIPTION_ABI_NATIVE_PAS,
   });
 }
 
@@ -106,10 +106,10 @@ export function useSubscriptionContract(client: ThirdwebClient) {
   const subscribe = useCallback(
     async (
       recipient: string,
-      amountPerCycleFlow: number,
+      amountPerCyclePas: number,
       frequency: "weekly" | "monthly" | "yearly"
     ): Promise<{ subscriptionId: string; txHash: string }> => {
-      const amountWei = parseUnits(amountPerCycleFlow.toString(), PAS_DECIMALS);
+      const amountWei = parseUnits(amountPerCyclePas.toString(), PAS_DECIMALS);
       const tx = prepareContractCall({
         contract,
         method: "subscribe",
@@ -187,7 +187,7 @@ export function useSubscriptionContractPay(client: ThirdwebClient) {
   const payWithApproval = useCallback(
     async (
       onChainSubscriptionId: string,
-      amountFlow: number,
+      amountPas: number,
       subscriptionIdBackend: string
     ): Promise<{ txHash: string }> => {
       const isDue = await readContract({
@@ -207,11 +207,11 @@ export function useSubscriptionContractPay(client: ThirdwebClient) {
           `Payment not due yet on-chain. Next due: ${dateStr}. You can pay again then.`
         );
       }
-      const amountWei = parseUnits(amountFlow.toString(), PAS_DECIMALS);
+      const amountWei = parseUnits(amountPas.toString(), PAS_DECIMALS);
       const txHash = await pay(onChainSubscriptionId, amountWei);
       await subscriptionApi.recordPayment(
         subscriptionIdBackend,
-        amountFlow,
+        amountPas,
         txHash,
         "polkadot-testnet",
         "completed"
