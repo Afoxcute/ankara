@@ -1,10 +1,17 @@
+/** Only use env value if it is a valid 20-byte (40 hex char) address. */
+function validAddress(v: string | undefined): v is string {
+  return typeof v === "string" && /^0x[a-fA-F0-9]{40}$/.test(v);
+}
+
 /**
  * Subscription smart contract configuration.
  * SubscriptionManager on Polkadot Hub TestNet.
+ * If VITE_SUBSCRIPTION_CONTRACT_ADDRESS is set but invalid (e.g. placeholder "0x..."), the default is used.
  */
-export const SUBSCRIPTION_CONTRACT_ADDRESS =
-  (import.meta.env.VITE_SUBSCRIPTION_CONTRACT_ADDRESS as string | undefined) ||
-  "0xb2AC0Db5788B222c417F9C1353C5574bC8106C77";
+export const SUBSCRIPTION_CONTRACT_ADDRESS: string =
+  validAddress(import.meta.env.VITE_SUBSCRIPTION_CONTRACT_ADDRESS as string | undefined)
+    ? (import.meta.env.VITE_SUBSCRIPTION_CONTRACT_ADDRESS as string)
+    : "0xb2AC0Db5788B222c417F9C1353C5574bC8106C77";
 
 // ERC20 SubscriptionManager contracts (USDC/USDt payments).
 // These must be deployed separately (one contract per paymentToken in the constructor).

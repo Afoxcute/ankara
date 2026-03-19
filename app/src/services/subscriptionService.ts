@@ -10,7 +10,6 @@ import {
 } from "./x402PaymentService";
 import { subscriptionApi, Subscription as ApiSubscription } from "./subscriptionApi";
 import {
-  SUBSCRIPTION_CONTRACT_ADDRESS,
   USDC_SUBSCRIPTION_CONTRACT_ADDRESS,
   USDt_SUBSCRIPTION_CONTRACT_ADDRESS,
 } from "../contracts/config";
