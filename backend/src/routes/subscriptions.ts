@@ -24,6 +24,29 @@ router.get('/user/:userAddress', async (req, res) => {
   }
 });
 
+// Get all subscriptions for a merchant (optional ?contractAddress=0x... to filter by current contract)
+// Merchant is identified by recipientAddress (the service provider wallet).
+router.get('/merchant/:recipientAddress', async (req, res) => {
+  try {
+    const { recipientAddress } = req.params;
+    const contractAddress = req.query.contractAddress as string | undefined;
+    console.log(
+      'Fetching subscriptions for merchant:',
+      recipientAddress,
+      contractAddress ? `(contract: ${contractAddress.slice(0, 10)}...)` : ''
+    );
+    const subscriptions = await subscriptionService.getMerchantSubscriptions(recipientAddress, contractAddress);
+    console.log('Found merchant subscriptions:', subscriptions.length);
+    res.json({ success: true, data: subscriptions });
+  } catch (error: any) {
+    console.error('Error fetching merchant subscriptions:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Failed to fetch merchant subscriptions',
+    });
+  }
+});
+
 // Get a single subscription
 router.get('/:id', async (req, res) => {
   try {

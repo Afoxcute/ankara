@@ -4,6 +4,7 @@ import { useNotificationHelpers } from "./contexts/NotificationContext";
 import { NotificationButton } from "./components/NotificationButton";
 import { NotificationToasts } from "./components/NotificationCenter";
 import SubscriptionManager from "./components/SubscriptionManager";
+import MerchantDashboard from "./components/MerchantDashboard";
 import RevenueAnalytics from "./pages/RevenueAnalytics";
 import Landing from "./pages/Landing";
 import PASBalance from "./components/PASBalance";
@@ -39,6 +40,7 @@ export default function App({ thirdwebClient }: AppProps) {
   const { notifySuccess, notifyError } = useNotificationHelpers();
   const [showLanding, setShowLanding] = useState(true);
   const [activeView, setActiveView] = useState<'subscriptions' | 'analytics'>('subscriptions');
+  const [dashboardMode, setDashboardMode] = useState<"user" | "merchant">("user");
 
   // Initialize subscription agent
   const [subscriptionAgent] = useState<SubscriptionAgent>(() => 
@@ -93,16 +95,46 @@ export default function App({ thirdwebClient }: AppProps) {
       <div className="main-content">
         <div className="tab-content">
           {activeView === 'subscriptions' ? (
-            <SubscriptionManager
-              client={thirdwebClient}
-              subscriptionAgent={subscriptionAgent}
-              onSuccess={(message) => {
-                notifySuccess('Success', message);
-              }}
-              onError={(message) => {
-                notifyError('Error', message);
-              }}
-            />
+            <>
+              <div className="dashboard-nav" style={{ marginTop: "0.25rem" }}>
+                <button
+                  type="button"
+                  className={dashboardMode === "user" ? "nav-tab active" : "nav-tab"}
+                  onClick={() => setDashboardMode("user")}
+                >
+                  👤 User Dashboard
+                </button>
+                <button
+                  type="button"
+                  className={dashboardMode === "merchant" ? "nav-tab active" : "nav-tab"}
+                  onClick={() => setDashboardMode("merchant")}
+                >
+                  🏪 Merchant Dashboard
+                </button>
+              </div>
+
+              {dashboardMode === "user" ? (
+                <SubscriptionManager
+                  client={thirdwebClient}
+                  subscriptionAgent={subscriptionAgent}
+                  onSuccess={(message) => {
+                    notifySuccess("Success", message);
+                  }}
+                  onError={(message) => {
+                    notifyError("Error", message);
+                  }}
+                />
+              ) : (
+                <MerchantDashboard
+                  onSuccess={(message) => {
+                    notifySuccess("Success", message);
+                  }}
+                  onError={(message) => {
+                    notifyError("Error", message);
+                  }}
+                />
+              )}
+            </>
           ) : (
             <RevenueAnalytics />
           )}

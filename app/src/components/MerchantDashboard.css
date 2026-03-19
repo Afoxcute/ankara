@@ -1,0 +1,162 @@
+.merchant-dashboard {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.merchant-header h2 {
+  margin: 0;
+}
+
+.merchant-subtitle {
+  margin-top: 0.5rem;
+  color: var(--color-text-secondary);
+  font-size: 0.95rem;
+}
+
+.merchant-filters {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.date-filters {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.date-filters label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-size: 0.875rem;
+  color: var(--color-text-secondary);
+}
+
+.merchant-actions {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.merchant-tabs {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.merchant-error {
+  color: #ff6b6b;
+  font-weight: 600;
+}
+
+.merchant-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.stat-card {
+  background: var(--color-bg-glass);
+  border: 1px solid var(--color-border-primary);
+  border-radius: var(--radius-xl);
+  padding: 1.25rem;
+  box-shadow: var(--shadow-md);
+}
+
+.stat-label {
+  color: var(--color-text-secondary);
+  font-size: 0.875rem;
+  margin-bottom: 0.5rem;
+}
+
+.stat-value {
+  font-size: 1.5rem;
+  font-weight: 800;
+}
+
+.merchant-services-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.merchant-service-card {
+  padding: 1.25rem;
+}
+
+.merchant-service-metrics {
+  margin-top: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.metric-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.metric-label {
+  color: var(--color-text-secondary);
+  font-size: 0.875rem;
+}
+
+.metric-value {
+  font-weight: 700;
+}
+
+.merchant-subscriptions-table-wrap {
+  background: var(--color-bg-glass);
+  border: 1px solid var(--color-border-primary);
+  border-radius: var(--radius-2xl);
+  padding: 1rem;
+  box-shadow: var(--shadow-md);
+  overflow: auto;
+}
+
+.merchant-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.merchant-table th,
+.merchant-table td {
+  padding: 0.75rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  text-align: left;
+  font-size: 0.9rem;
+}
+
+.merchant-table th {
+  color: var(--color-text-secondary);
+  font-weight: 700;
+}
+
+.merchant-payments-cell {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.merchant-payments-inner {
+  padding: 0.75rem 0;
+}
+
+.payments-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+@media (max-width: 900px) {
+  .merchant-summary-grid {
+    grid-template-columns: 1fr;
+  }
+  .merchant-services-grid {
+    grid-template-columns: 1fr;
+  }
+}
+

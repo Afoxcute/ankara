@@ -109,16 +109,10 @@ export const subscriptionApi = {
   },
 
   /**
-   * Create a catalog service only (POST /api/services). Does not create an on-chain subscription.
+   * Get services for a merchant (merchant is identified by recipientAddress).
    */
-  async createCatalogService(data: {
-    name: string;
-    description?: string;
-    cost: number;
-    frequency: string;
-    recipientAddress: string;
-  }): Promise<Service> {
-    const response = await api.post('/services', data);
+  async getMerchantServices(recipientAddress: string): Promise<Service[]> {
+    const response = await api.get(`/services/merchant/${recipientAddress}`);
     return response.data.data;
   },
 
@@ -128,6 +122,19 @@ export const subscriptionApi = {
   async getUserSubscriptions(userAddress: string, contractAddress?: string): Promise<Subscription[]> {
     const params = contractAddress ? { contractAddress } : {};
     const response = await api.get(`/subscriptions/user/${userAddress}`, { params });
+    return response.data.data;
+  },
+
+  /**
+   * Get subscriptions for a merchant (merchant is identified by recipientAddress).
+   * Pass contractAddress to only show subscriptions for the current contract.
+   */
+  async getMerchantSubscriptions(
+    recipientAddress: string,
+    contractAddress?: string
+  ): Promise<Subscription[]> {
+    const params = contractAddress ? { contractAddress } : {};
+    const response = await api.get(`/subscriptions/merchant/${recipientAddress}`, { params });
     return response.data.data;
   },
 

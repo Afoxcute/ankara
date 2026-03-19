@@ -18,6 +18,21 @@ router.get('/', async (req, res) => {
   }
 });
 
+// Get services for a merchant (merchant is the recipientAddress)
+router.get('/merchant/:recipientAddress', async (req, res) => {
+  try {
+    const { recipientAddress } = req.params;
+    const services = await subscriptionService.getMerchantServices(recipientAddress);
+    res.json({ success: true, data: services });
+  } catch (error: any) {
+    console.error('Error fetching merchant services:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Failed to fetch merchant services',
+    });
+  }
+});
+
 // Create a new service
 router.post('/', async (req, res) => {
   try {

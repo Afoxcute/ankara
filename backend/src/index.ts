@@ -86,9 +86,6 @@ app.use('/api/statistics', statisticsRoutes);
 import failedPaymentsRoutes from './routes/failedPayments';
 app.use('/api/failed-payments', failedPaymentsRoutes);
 
-import chatRoutes from './routes/chat';
-app.use('/api/chat', chatRoutes);
-
 // Health check endpoint
 app.get('/health', async (_req, res) => {
   try {

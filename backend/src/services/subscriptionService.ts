@@ -101,6 +101,89 @@ export class SubscriptionService {
   }
 
   /**
+   * Get all services owned by a merchant (merchant is the service recipientAddress).
+   */
+  async getMerchantServices(recipientAddress: string) {
+    const addr = recipientAddress.toLowerCase();
+
+    const services = await prisma.service.findMany({
+      where: {
+        isActive: true,
+        recipientAddress: {
+          equals: addr,
+          mode: "insensitive",
+        },
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+
+    return services.map((service) => ({
+      ...service,
+      cost: this.decimalToNumber(service.cost),
+    }));
+  }
+
+  /**
+   * Get subscriptions for a merchant (merchant is the subscription recipientAddress).
+   * When contractAddress is set, only returns subscriptions for that contract (or with no on-chain id).
+   */
+  async getMerchantSubscriptions(
+    recipientAddress: string,
+    contractAddress?: string
+  ) {
+    const currentContract = contractAddress;
+    const addr = recipientAddress.toLowerCase();
+
+    const where: any = {
+      recipientAddress: {
+        equals: addr,
+        mode: "insensitive",
+      },
+      isActive: true,
+    };
+
+    // Only show subscriptions for the current contract (or off-chain only)
+    if (currentContract) {
+      const contractAddr = currentContract.toLowerCase();
+      where.AND = [{ OR: [{ onChainContractAddress: null }, { onChainContractAddress: contractAddr }] }];
+    }
+
+    const subscriptions = await prisma.subscription.findMany({
+      where,
+      include: {
+        service: true,
+        payments: {
+          orderBy: {
+            timestamp: "desc",
+          },
+          take: 10,
+        },
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+
+    // Convert Decimal to number for JSON serialization
+    return subscriptions.map((sub) => ({
+      ...sub,
+      cost: this.decimalToNumber(sub.cost),
+      service: sub.service
+        ? {
+            ...sub.service,
+            cost: this.decimalToNumber(sub.service.cost),
+          }
+        : null,
+      payments: sub.payments?.map((payment) => ({
+        ...payment,
+        amount: this.decimalToNumber(payment.amount),
+      })),
+    }));
+  }
+
+  /**
    * Get a single subscription by ID (with caching)
    */
   async getSubscription(id: string) {
