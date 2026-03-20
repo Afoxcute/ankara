@@ -82,6 +82,16 @@ We build in the open, keep the flow inspectable (on-chain where applicable), and
 
 - **Weekly**, **Monthly**, **Yearly** (on-chain and in backend).
 
+### OpenZeppelin Sponsor Track Alignment
+This project aligns with the OpenZeppelin sponsor track by using OpenZeppelin contract libraries as security-critical building blocks inside a non-trivial subscription/payment application (not just deploying unmodified token contracts):
+
+- **Core security integration (embedded in real app logic):**
+  - `contracts/contracts/SubscriptionManager.sol` uses `ReentrancyGuard` for the `pay()` entrypoint and composes with `IERC20` + `SafeERC20` (`using SafeERC20 for IERC20`) to safely execute the recurring ERC-20 subscription payment flow.
+  - `contracts/contracts/SubscriptionManagerPas.sol` uses `ReentrancyGuard` to protect the native PAS `pay(subscriptionId)` logic, including due-time gating (`nextDueAt`), value checks (`msg.value >= amountPerCycle`), and controlled recipient forwarding/refund handling.
+- **Non-trivial application behavior on top of OZ primitives:**
+  - Both contracts implement subscription state (`subscriber`, `recipient`, `amountPerCycle`, `frequency`, `nextDueAt`, `active`) and enforce who is allowed to pay and when payments are due.
+  - They emit `SubscriptionCreated`, `PaymentMade`, and `SubscriptionCancelled`, which supports the backend’s chain-to-DB sync so revenue analytics remain accurate on Polkadot Hub TestNet.
+
 ### Public subscriptions (Polkadot Hub TestNet)
 
 1. User connects wallet (Polkadot Hub TestNet).
