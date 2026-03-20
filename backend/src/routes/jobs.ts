@@ -1,7 +1,9 @@
 import express from 'express';
 import { getAutoPayJobStatus, getJobsForSubscription } from '../queue/autoPayQueue';
+import { SubscriptionService } from '../services/subscriptionService';
 
 const router = express.Router();
+const subscriptionService = new SubscriptionService();
 
 /**
  * GET /api/jobs/:jobId
@@ -47,6 +49,33 @@ router.get('/subscription/:subscriptionId', async (req, res) => {
     res.status(500).json({
       success: false,
       error: error.message || 'Failed to fetch jobs',
+    });
+  }
+});
+
+/**
+ * POST /api/jobs/sync-chain-payments
+ * Backfill payments from on-chain PaymentMade events into DB.
+ * Body: { contractAddress?: string, fromBlock?: string|number, toBlock?: string|number }
+ */
+router.post('/sync-chain-payments', async (req, res) => {
+  try {
+    const { contractAddress, fromBlock, toBlock } = req.body || {};
+    const result = await subscriptionService.syncPaymentsFromChain({
+      contractAddress,
+      ...(fromBlock !== undefined && fromBlock !== null
+        ? { fromBlock: BigInt(fromBlock) }
+        : {}),
+      ...(toBlock !== undefined && toBlock !== null
+        ? { toBlock: BigInt(toBlock) }
+        : {}),
+    });
+    res.json({ success: true, data: result });
+  } catch (error: any) {
+    console.error('Error syncing chain payments:', error);
+    res.status(400).json({
+      success: false,
+      error: error.message || 'Failed to sync chain payments',
     });
   }
 });

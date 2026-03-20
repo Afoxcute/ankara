@@ -276,10 +276,18 @@ export class SubscriptionAgent {
 
       // Record payment in database
       try {
+        const txHash =
+          settleResult.txHash ||
+          // Some facilitator responses return `transactionHash` instead of `txHash`.
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          (settleResult as any).transactionHash ||
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          (settleResult as any).transaction_hash;
+
         await subscriptionApi.recordPayment(
           subscription.id,
           subscription.cost,
-          settleResult.txHash || '',
+          txHash || '',
           'polkadot-testnet',
           'completed'
         );
@@ -300,7 +308,12 @@ export class SubscriptionAgent {
 
       return {
         success: true,
-        transactionHash: settleResult.txHash,
+        transactionHash:
+          settleResult.txHash ||
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          (settleResult as any).transactionHash ||
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          (settleResult as any).transaction_hash,
       };
     } catch (error) {
       console.error('Payment error:', error);

@@ -77,6 +77,12 @@ export default function MerchantDashboard({
       const dateStart = startDate || undefined;
       const dateEnd = endDate || undefined;
 
+      // Backfill chain PaymentMade events first so merchant analytics/subscription payment panels
+      // include payments that were made on-chain without DB recording.
+      await statisticsApi.syncChainPayments({
+        contractAddress: contractAddress,
+      });
+
       const [services, subs, revenue] = await Promise.all([
         subscriptionApi.getMerchantServices(merchantAddress),
         subscriptionApi.getMerchantSubscriptions(merchantAddress, contractAddress),

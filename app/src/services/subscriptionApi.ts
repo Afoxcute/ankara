@@ -480,6 +480,27 @@ export const statisticsApi = {
     const response = await api.get(`/statistics/receipts/payer/${userAddress}`, { params });
     return response.data.data;
   },
+
+  /**
+   * Trigger backend sync to backfill PaymentMade chain events into DB.
+   */
+  async syncChainPayments(options?: {
+    contractAddress?: string;
+    fromBlock?: number | string;
+    toBlock?: number | string;
+  }): Promise<{
+    contractAddress: string;
+    fromBlock: string;
+    toBlock: string;
+    processed: number;
+    inserted: number;
+    duplicates: number;
+    unmatchedSubscriptions: number;
+    errors: string[];
+  }> {
+    const response = await api.post('/jobs/sync-chain-payments', options ?? {});
+    return response.data.data;
+  },
 };
 
 // Failed Payment Types

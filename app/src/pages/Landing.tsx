@@ -13,7 +13,7 @@ export default function Landing({ onEnterApp }: LandingProps) {
     <div className="landing">
       <nav className="landing-nav">
         <div className="landing-nav-inner">
-          <span className="landing-logo">🤖 Ankara</span>
+          <span className="landing-logo">ankara</span>
           <button type="button" className="landing-nav-cta" onClick={onEnterApp}>
             Open app
           </button>
@@ -49,7 +49,7 @@ export default function Landing({ onEnterApp }: LandingProps) {
 
       <section className="landing-features">
         <div className="landing-features-inner">
-          <h2 className="landing-section-title">Why Ankara</h2>
+          <h2 className="landing-section-title">Why ankara</h2>
           <ul className="landing-feature-list">
             <li className="landing-feature">
               <span className="landing-feature-icon">💧</span>
@@ -88,7 +88,7 @@ export default function Landing({ onEnterApp }: LandingProps) {
 
       <footer className="landing-footer">
         <div className="landing-footer-inner">
-          <span className="landing-logo">🤖 Ankara</span>
+          <span className="landing-logo">ankara</span>
           <p className="landing-footer-tagline">Smart subscription manager on Polkadot Hub</p>
         </div>
       </footer>

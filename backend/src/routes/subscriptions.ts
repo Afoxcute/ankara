@@ -135,10 +135,10 @@ router.post('/:id/payments', async (req, res) => {
     const { id } = req.params;
     const { amount, transactionHash, network, status, errorMessage } = req.body;
 
-    if (!amount || !transactionHash) {
+    if (amount === undefined || amount === null) {
       return res.status(400).json({
         success: false,
-        error: 'Amount and transactionHash are required',
+        error: 'Amount is required',
       });
     }
 

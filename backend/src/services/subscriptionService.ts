@@ -2,6 +2,7 @@ import { Prisma } from '@prisma/client';
 import { prisma } from '../lib/prisma';
 import { Decimal } from '@prisma/client/runtime/library';
 import { cacheService, CacheKeys, CacheTTL } from '../utils/cache';
+import { createPublicClient, decodeEventLog, formatUnits, http } from 'viem';
 
 export interface CreateSubscriptionInput {
   serviceId?: string;
@@ -38,6 +39,176 @@ export interface UpdateSubscriptionInput {
 }
 
 export class SubscriptionService {
+  /**
+   * Backfill payments from on-chain PaymentMade events into the payments table.
+   * Useful when a payment happens on-chain but the frontend/API record step is skipped.
+   */
+  async syncPaymentsFromChain(options?: {
+    contractAddress?: string;
+    fromBlock?: bigint;
+    toBlock?: bigint;
+  }) {
+    const rpcUrl = process.env.RPC_PROVIDER_URL || 'https://eth-rpc-testnet.polkadot.io';
+    const configuredAddress =
+      options?.contractAddress ||
+      process.env.SUBSCRIPTION_CONTRACT_ADDRESS ||
+      process.env.VITE_SUBSCRIPTION_CONTRACT_ADDRESS;
+
+    if (!configuredAddress || !/^0x[a-fA-F0-9]{40}$/.test(configuredAddress)) {
+      throw new Error(
+        'Missing/invalid subscription contract address for chain sync. Pass contractAddress in request body or set SUBSCRIPTION_CONTRACT_ADDRESS in backend .env.'
+      );
+    }
+
+    const contractAddress = configuredAddress.toLowerCase();
+    const client = createPublicClient({
+      transport: http(rpcUrl),
+    });
+
+    const latest = await client.getBlockNumber();
+    const defaultFrom = latest > BigInt(100_000) ? latest - BigInt(100_000) : BigInt(0);
+    const fromBlock = options?.fromBlock ?? defaultFrom;
+    const toBlock = options?.toBlock ?? latest;
+
+    // Fetch all contract logs, then decode PaymentMade locally.
+    // This avoids brittle server-side `event` filtering differences across RPC providers.
+    const PAYMENT_MADE_EVENT_ABI = [
+      {
+        type: 'event',
+        name: 'PaymentMade',
+        anonymous: false,
+        inputs: [
+          { indexed: true, name: 'subscriptionId', type: 'uint256' },
+          { indexed: true, name: 'subscriber', type: 'address' },
+          { indexed: true, name: 'recipient', type: 'address' },
+          { indexed: false, name: 'amount', type: 'uint256' },
+          { indexed: false, name: 'nextDueAt', type: 'uint256' },
+          { indexed: false, name: 'timestamp', type: 'uint256' },
+        ],
+      },
+    ] as const;
+
+    const logs = await client.getLogs({
+      address: contractAddress as `0x${string}`,
+      fromBlock,
+      toBlock,
+    });
+
+    let processed = 0;
+    let inserted = 0;
+    let duplicates = 0;
+    let unmatchedSubscriptions = 0;
+    const errors: string[] = [];
+
+    for (const log of logs) {
+      processed += 1;
+      try {
+        const txHash = log.transactionHash;
+        if (!txHash) continue;
+
+        let decoded: any;
+        try {
+          decoded = decodeEventLog({
+            abi: PAYMENT_MADE_EVENT_ABI as any,
+            data: log.data,
+            topics: log.topics as any,
+          });
+        } catch {
+          // Not a PaymentMade log
+          continue;
+        }
+
+        const args = decoded.args as {
+          subscriptionId: bigint;
+          amount: bigint;
+          nextDueAt: bigint;
+          timestamp: bigint;
+        };
+
+        const existingByTx = await prisma.payment.findUnique({
+          where: { transactionHash: txHash },
+          select: { id: true },
+        });
+        if (existingByTx) {
+          duplicates += 1;
+          continue;
+        }
+
+        const onChainSubId = args.subscriptionId.toString();
+        const subscription = await prisma.subscription.findFirst({
+          where: {
+            onChainSubscriptionId: onChainSubId,
+            onChainContractAddress: contractAddress,
+          },
+          orderBy: { createdAt: 'desc' },
+          select: {
+            id: true,
+            userAddress: true,
+          },
+        });
+
+        if (!subscription) {
+          unmatchedSubscriptions += 1;
+          continue;
+        }
+
+        const amountPasRaw = Number(formatUnits(args.amount, 18));
+        const amountPas = Math.round(amountPasRaw * 1_000_000) / 1_000_000; // DB precision is Decimal(18,6)
+        const paidAt = args.timestamp ? new Date(Number(args.timestamp) * 1000) : new Date();
+        const nextDue = args.nextDueAt ? new Date(Number(args.nextDueAt) * 1000) : undefined;
+
+        await prisma.$transaction([
+          prisma.payment.create({
+            data: {
+              subscriptionId: subscription.id,
+              amount: new Decimal(amountPas),
+              transactionHash: txHash,
+              network: 'polkadot-testnet',
+              status: 'completed',
+              timestamp: paidAt,
+            },
+          }),
+          prisma.subscription.update({
+            where: { id: subscription.id },
+            data: {
+              lastPaymentDate: paidAt,
+              ...(nextDue ? { nextPaymentDate: nextDue } : {}),
+            },
+          }),
+        ]);
+
+        await Promise.all([
+          cacheService.invalidate(CacheKeys.subscription(subscription.id)),
+          cacheService.invalidatePattern(`${CacheKeys.userSubscriptions(subscription.userAddress)}*`),
+          cacheService.invalidatePattern(`payments:subscription:${subscription.id}*`),
+          cacheService.invalidatePattern('stats:*'),
+        ]);
+
+        inserted += 1;
+      } catch (err: unknown) {
+        if (
+          err instanceof Prisma.PrismaClientKnownRequestError &&
+          err.code === 'P2002'
+        ) {
+          duplicates += 1;
+          continue;
+        }
+        errors.push(err instanceof Error ? err.message : 'Unknown sync error');
+      }
+    }
+
+    return {
+      contractAddress,
+      fromBlock: fromBlock.toString(),
+      toBlock: toBlock.toString(),
+      processed,
+      inserted,
+      duplicates,
+      unmatchedSubscriptions,
+      errors,
+    };
+  }
+
   /**
    * Get all subscriptions for a user (with caching)
    */
@@ -525,11 +696,18 @@ export class SubscriptionService {
   async recordPayment(
     subscriptionId: string,
     amount: number,
-    transactionHash: string,
+    transactionHash?: string,
     network: string = 'polkadot-testnet',
     status: string = 'completed',
     errorMessage?: string
   ) {
+    // `transactionHash` is optional for some x402/off-chain settlement paths.
+    // Prisma schema requires it to be unique, so we generate a placeholder when missing.
+    const safeTransactionHash =
+      transactionHash && transactionHash.length > 0
+        ? transactionHash
+        : `missing-tx:${subscriptionId}:${Date.now()}:${Math.random().toString(16).slice(2)}`;
+
     // Update subscription's last payment date and next payment date
     const subscription = await prisma.subscription.findUnique({
       where: { id: subscriptionId },
@@ -547,7 +725,7 @@ export class SubscriptionService {
         data: {
           subscriptionId,
           amount: new Decimal(amount),
-          transactionHash,
+          transactionHash: safeTransactionHash,
           network,
           status,
           errorMessage,
@@ -896,12 +1074,22 @@ export class SubscriptionService {
 
     if (recipientAddress) {
       whereClause.subscription = {
-        service: {
-          recipientAddress: {
-            equals: recipientAddress.toLowerCase(),
-            mode: 'insensitive',
+        OR: [
+          {
+            recipientAddress: {
+              equals: recipientAddress.toLowerCase(),
+              mode: 'insensitive',
+            },
           },
-        },
+          {
+            service: {
+              recipientAddress: {
+                equals: recipientAddress.toLowerCase(),
+                mode: 'insensitive',
+              },
+            },
+          },
+        ],
       };
     }
 
@@ -992,12 +1180,22 @@ export class SubscriptionService {
 
     if (recipientAddress) {
       whereClause.subscription = {
-        service: {
-          recipientAddress: {
-            equals: recipientAddress.toLowerCase(),
-            mode: 'insensitive',
+        OR: [
+          {
+            recipientAddress: {
+              equals: recipientAddress.toLowerCase(),
+              mode: 'insensitive',
+            },
           },
-        },
+          {
+            service: {
+              recipientAddress: {
+                equals: recipientAddress.toLowerCase(),
+                mode: 'insensitive',
+              },
+            },
+          },
+        ],
       };
     }
 
@@ -1071,12 +1269,22 @@ export class SubscriptionService {
 
     if (recipientAddress) {
       whereClause.subscription = {
-        service: {
-          recipientAddress: {
-            equals: recipientAddress.toLowerCase(),
-            mode: 'insensitive',
+        OR: [
+          {
+            recipientAddress: {
+              equals: recipientAddress.toLowerCase(),
+              mode: 'insensitive',
+            },
           },
-        },
+          {
+            service: {
+              recipientAddress: {
+                equals: recipientAddress.toLowerCase(),
+                mode: 'insensitive',
+              },
+            },
+          },
+        ],
       };
     }
 
@@ -1277,12 +1485,22 @@ export class SubscriptionService {
     if (options?.recipientAddress) {
       whereClause.subscription = {
         ...whereClause.subscription,
-        service: {
-          recipientAddress: {
-            equals: options.recipientAddress.toLowerCase(),
-            mode: 'insensitive',
+        OR: [
+          {
+            recipientAddress: {
+              equals: options.recipientAddress.toLowerCase(),
+              mode: 'insensitive',
+            },
           },
-        },
+          {
+            service: {
+              recipientAddress: {
+                equals: options.recipientAddress.toLowerCase(),
+                mode: 'insensitive',
+              },
+            },
+          },
+        ],
       };
     }
 
@@ -1363,12 +1581,22 @@ export class SubscriptionService {
 
     if (recipientAddress) {
       whereClause.subscription = {
-        service: {
-          recipientAddress: {
-            equals: recipientAddress.toLowerCase(),
-            mode: 'insensitive',
+        OR: [
+          {
+            recipientAddress: {
+              equals: recipientAddress.toLowerCase(),
+              mode: 'insensitive',
+            },
           },
-        },
+          {
+            service: {
+              recipientAddress: {
+                equals: recipientAddress.toLowerCase(),
+                mode: 'insensitive',
+              },
+            },
+          },
+        ],
       };
     }
 

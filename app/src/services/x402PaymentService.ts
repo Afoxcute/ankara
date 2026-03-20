@@ -109,6 +109,8 @@ export interface SettleResponse {
   x402Version: number;
   event: 'payment.settled' | 'payment.failed';
   txHash?: string;
+  // Some x402 facilitator responses use `transactionHash` instead of `txHash`.
+  transactionHash?: string;
   from?: string;
   to?: string;
   value?: string;
