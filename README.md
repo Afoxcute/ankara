@@ -1,40 +1,49 @@
-# Ankara
+# ankara
 
-**Ankara** is a subscription and recurring-payment system on blockchain. Users create subscriptions, pay in native PAS (or optionally in private/confidential mode on Sepolia), and manage everything from a single app with optional auto-pay and AI suggestions.
+**ankara** is a subscription and recurring-payment system on blockchain. Users create subscriptions, pay in native PAS (or optionally in private/confidential mode on Sepolia), and manage everything from a single app with optional auto-pay and analytics.
 
 ---
 
 ## Table of contents
 
-- [Overview](#overview)
-- [Architecture](#architecture)
-- [Subscription system](#subscription-system)
-- [Smart contracts](#smart-contracts)
-- [Backend API](#backend-api)
-- [Frontend app](#frontend-app)
-- [Environment variables](#environment-variables)
-- [Getting started](#getting-started)
-- [Deployment](#deployment)
+- [Vision & Commitment](#vision--commitment)
+- [Schedule](#schedule)
+- [Project Structure](#project-structure)
+- [Implementation Summary](#implementation-summary)
+- [Network & Contracts](#network--contracts)
+- [Getting Started](#getting-started)
+- [Environment Variables](#environment-variables)
+- [Scripts](#scripts)
+- [Documentation](#documentation)
+- [License](#license)
 
 ---
 
-## Overview
+## Vision & Commitment
 
-- **Public subscriptions (Polkadot Hub TestNet)**
-  On-chain subscriptions with **native PAS**. No ERC20 approvals; `pay()` is payable and forwards PAS to the recipient. Amounts and schedules are public on-chain.
+### Vision
+Make recurring services simple to create, transparent to verify, and dependable to pay by combining on-chain subscriptions with a practical backend and a dashboard experience.
 
-- **Confidential subscriptions (Sepolia, optional)**  
-  Uses **Zama FHEVM**: subscription amount is stored as an encrypted value (`euint64`). Only the subscriber can decrypt their amount via the relayer SDK. Payments are still in native ETH on Sepolia.
+### Mission
+Let users subscribe and pay for services on Polkadot Hub TestNet (native PAS) and optionally use confidential subscriptions on Sepolia, while keeping payment history and revenue analytics consistent in the UI.
 
-- **Backend**  
-  PostgreSQL + Express API for services catalog, user subscriptions, payment history, auto-pay queue (Bull + Redis), and statistics. Subscriptions are synced with on-chain IDs and contract addresses.
-
-- **Frontend**  
-  React (Vite) + Thirdweb: connect wallet (Polkadot Hub TestNet or Sepolia for confidential), create or subscribe to services, pay when due, view payment history, and use AI suggestions for cancellations.
+### Commitment
+We build in the open, keep the flow inspectable (on-chain where applicable), and make the backend resilient with caching, retries, and chain-to-DB sync so the dashboards stay accurate.
 
 ---
 
-## Architecture
+## Schedule
+| Phase | Scope | Status |
+|---|---|---|
+| Phase 1 – Foundation | Smart contracts, frontend, backend, and core subscription/payment flows | ✅ Done |
+| Phase 2 – Launch & hardening | Testnet launch, instrumentation, and dashboard accuracy work | ✅ Done |
+| Phase 3 – Advanced | Merchant scoping, analytics, payment history fallbacks, chain sync job | ✅ Done |
+| Phase 4 – Mobile & API | Expanded integrations and API hardening | 🚧 In progress |
+| Phase 5+ | Marketplace, multi-chain expansion, enterprise analytics | Planned |
+
+---
+
+## Project Structure
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────┐
@@ -59,7 +68,7 @@
 
 ---
 
-## Subscription system
+## Implementation Summary
 
 ### Concepts
 
@@ -90,7 +99,7 @@
 
 ---
 
-## Smart contracts
+## Network & Contracts
 
 ### 1. Native PAS subscription manager (Polkadot Hub TestNet)
 
@@ -125,7 +134,7 @@
 
 ---
 
-## Backend API
+### Backend API
 
 - **Base URL:** `VITE_API_URL` in app (e.g. `http://localhost:5000/api`).
 
@@ -166,15 +175,15 @@ Auto-pay uses a Bull queue (Redis). Scheduler checks for due subscriptions and e
 
 ---
 
-## Frontend app
+### Frontend app
 
 - **Stack:** React, Vite, TypeScript, Thirdweb (connect wallet, send tx), Tailwind.
 - **Location:** `app/`
 
 **Main flows:**
 
-- **Landing:** “Ankara” branding, “Open app” → main app.
-- **Main app:** Header (Ankara, balance, Connect), tabs: Subscriptions | Analytics.
+- **Landing:** “ankara” branding, “Open app” → main app.
+- **Main app:** Header (ankara, balance, Connect), tabs: Subscriptions | Analytics.
 - **Subscriptions:**  
   - **Available services** — list from `GET /api/services`; “Subscribe” opens form pre-filled with that service.  
   - **Create new service** — form (name, cost PAS/ETH, frequency, recipient, auto-pay, optional “Private subscription” for FHE). On submit: contract `subscribe` then `POST /api/subscriptions` with on-chain id and contract address.  
@@ -188,7 +197,7 @@ Auto-pay uses a Bull queue (Redis). Scheduler checks for due subscriptions and e
 
 ---
 
-## Environment variables
+## Environment Variables
 
 ### App (`app/.env`)
 
@@ -216,7 +225,7 @@ Auto-pay uses a Bull queue (Redis). Scheduler checks for due subscriptions and e
 
 ---
 
-## Getting started
+## Getting Started
 
 ### Prerequisites
 
@@ -224,6 +233,8 @@ Auto-pay uses a Bull queue (Redis). Scheduler checks for due subscriptions and e
 - Yarn
 - PostgreSQL database
 - Redis (for backend auto-pay)
+
+### Quick Start
 
 ### 1. Contracts (Polkadot Hub TestNet)
 
@@ -272,7 +283,7 @@ yarn deploy:confidential
 
 ---
 
-## Deployment
+## Scripts
 
 ### Contracts
 
@@ -292,7 +303,7 @@ yarn deploy:confidential
 
 ---
 
-## Summary
+## Documentation
 
 | Layer | Role |
 |-------|------|
@@ -302,3 +313,8 @@ yarn deploy:confidential
 | **App** | Wallet connect, create/subscribe to services, pay, cancel, view history, AI suggestions; supports public PAS (Polkadot Hub) and confidential (Sepolia) subscriptions. |
 
 All services created in the app are available to every connected user via “Available services”; anyone can subscribe to any service and pay on-chain.
+
+---
+
+## License
+MIT.
